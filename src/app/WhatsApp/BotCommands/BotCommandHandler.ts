@@ -1,13 +1,18 @@
 import {
     BOT_COMMANDS_REGEX,
+    QueryTransactionMatchGroups,
     SubscribeWalletMatchGroups,
 } from '@/app/WhatsApp/BotCommands/commands';
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { DEFAULT_NETWORK } from '@/constants/strings';
-import { Address, isAddress } from 'viem';
+import { Address, isAddress, isHash } from 'viem';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
+import { getPublicClient } from '@/app/OnchainBuddy/viemClients';
+import { ankrArbitrumMainnet } from '@/app/OnchainBuddy/config';
+import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
+import { getTransactionExplorerUrl } from '@/resources/explorer';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -32,6 +37,12 @@ class BotCommandHandler {
                 await BotCommandHandler.handleWalletSubscriptionCommand(
                     phoneParams,
                     botCommand.params.wallet
+                );
+                break;
+            case 'QUERY_TRANSACTION':
+                await BotCommandHandler.handleTransactionQueryCommand(
+                    phoneParams,
+                    botCommand.params.transactionHash
                 );
                 break;
             default:
@@ -87,6 +98,56 @@ class BotCommandHandler {
         );
     }
 
+    public static async handleTransactionQueryCommand(
+        phoneParams: PhoneNumberParams,
+        transactionHash: string
+    ) {
+        const defaultPublicClient = getPublicClient(
+            ankrArbitrumMainnet.viemChain,
+            ankrArbitrumMainnet.rpcUrl
+        );
+
+        if (!isHash(transactionHash)) {
+            await BotApi.sendWhatsappMessage(
+                phoneParams.businessPhoneNumberId,
+                MessageGenerators.generateTextMessage(
+                    phoneParams.userPhoneNumber,
+                    '❌ Invalid transaction hash'
+                )
+            );
+
+            return;
+        }
+
+        // Handle transaction query
+        const transaction = await OnchainBuddyLibrary.getTransactionByHash(
+            transactionHash,
+            defaultPublicClient
+        );
+
+        if (!transaction) {
+            await BotApi.sendWhatsappMessage(
+                phoneParams.businessPhoneNumberId,
+                MessageGenerators.generateTextMessage(
+                    phoneParams.userPhoneNumber,
+                    '❌ Transaction not found'
+                )
+            );
+
+            return;
+        }
+
+        const message = generateTransactionReceiptMessage(
+            transaction,
+            getTransactionExplorerUrl(transactionHash, ankrArbitrumMainnet.network)
+        );
+
+        await BotApi.sendWhatsappMessage(
+            phoneParams.businessPhoneNumberId,
+            MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
+        );
+    }
+
     public static isCommand(command: string) {
         const commandRegex = Object.values(BOT_COMMANDS_REGEX).find((regex) => regex.test(command));
 
@@ -103,6 +164,11 @@ class BotCommandHandler {
                 return {
                     command: commandName,
                     params: command.match(commandRegex)?.groups as SubscribeWalletMatchGroups,
+                };
+            case 'QUERY_TRANSACTION':
+                return {
+                    command: commandName,
+                    params: command.match(commandRegex)?.groups as QueryTransactionMatchGroups,
                 };
             default:
                 return {

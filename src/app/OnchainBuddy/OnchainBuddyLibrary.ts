@@ -1,8 +1,7 @@
 import { SupportedChain } from '@/app/types';
 import AlchemyNotifyService from '@/app/AlchemyNotify/AlchemyNotifyService';
-import { Address } from 'viem';
+import { Address, PublicClient } from 'viem';
 import { walletSubscriptionRepository } from '@/resources/data/db';
-import { getXataClient } from '@/xata';
 
 class OnchainBuddyLibrary {
     public static async subscribeWalletNotification(
@@ -35,6 +34,12 @@ class OnchainBuddyLibrary {
                 walletAddress: walletAddress,
             })
             .getAll();
+    }
+
+    public static async getTransactionByHash(transactionHash: string, publicClient: PublicClient) {
+        return await publicClient.getTransactionReceipt({
+            hash: transactionHash as Address,
+        });
     }
 }
 

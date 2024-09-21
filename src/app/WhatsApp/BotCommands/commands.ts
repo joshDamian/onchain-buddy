@@ -8,3 +8,7 @@ export const BOT_COMMANDS_REGEX = {
 export type SubscribeWalletMatchGroups = {
     wallet: string;
 };
+
+export type QueryTransactionMatchGroups = {
+    transactionHash: string;
+};
