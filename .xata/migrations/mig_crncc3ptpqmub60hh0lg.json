@@ -1,0 +1,27 @@
+{
+  "done": true,
+  "migration": {
+    "name": "mig_crncc3ptpqmub60hh0lg",
+    "operations": [
+      {
+        "add_column": {
+          "table": "WalletSubscriptions",
+          "column": {
+            "pk": false,
+            "name": "subscriberPhoneNumber",
+            "type": "text",
+            "unique": false,
+            "comment": "",
+            "default": "''",
+            "nullable": false
+          }
+        }
+      }
+    ]
+  },
+  "migrationType": "pgroll",
+  "name": "mig_crncc3ptpqmub60hh0lg",
+  "parent": "mig_crncc070eiotiuv7r6a0",
+  "schema": "public",
+  "startedAt": "2024-09-21T13:11:44.376798Z"
+}
