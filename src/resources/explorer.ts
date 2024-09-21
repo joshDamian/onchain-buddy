@@ -6,8 +6,8 @@ const EXPLORER_URLS: {
     };
 } = {
     Arbitrum: {
-        testnet: 'https://sepolia.etherscan.io',
-        mainnet: 'https://etherscan.io',
+        testnet: 'https://sepolia.arbiscan.io/',
+        mainnet: 'https://arbiscan.io/',
     },
 };
 
