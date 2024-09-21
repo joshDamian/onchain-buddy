@@ -15,7 +15,7 @@ class WebhookController {
                 webhookBody: req.body,
             });
 
-            const messageParts = this.extractStringMessageParts(req.body);
+            const messageParts = WebhookController.extractStringMessageParts(req.body);
 
             const { message, displayName, businessPhoneNumberId } = messageParts;
 
@@ -28,7 +28,11 @@ class WebhookController {
             });
 
             if (message && message.id && businessPhoneNumberId && displayName) {
-                await this.messageTypeCheck(message, businessPhoneNumberId, displayName);
+                await WebhookController.messageTypeCheck(
+                    message,
+                    businessPhoneNumberId,
+                    displayName
+                );
             } else {
                 logSync('debug', 'Message object not found');
             }
