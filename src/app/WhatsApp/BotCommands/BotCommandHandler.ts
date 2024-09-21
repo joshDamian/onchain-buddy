@@ -6,6 +6,8 @@ import { PhoneNumberParams } from '@/app/WhatsApp/types';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { DEFAULT_NETWORK } from '@/constants/strings';
 import { Address } from 'viem';
+import BotApi from '@/app/WhatsApp/BotApi/BotApi';
+import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -53,6 +55,14 @@ class BotCommandHandler {
             wallet as Address,
             DEFAULT_NETWORK,
             phoneParams.userPhoneNumber
+        );
+
+        await BotApi.sendWhatsappMessage(
+            phoneParams.businessPhoneNumberId,
+            MessageGenerators.generateTextMessage(
+                '✅ Wallet subscription successful',
+                phoneParams.userPhoneNumber
+            )
         );
     }
 
