@@ -7,6 +7,7 @@ export const getXataClient = (): XataClient => {
     if (!xataClientInstance) {
         xataClientInstance = new XataClient({
             apiKey: env.XATA_API_KEY,
+            branch: 'main',
         });
     }
 
