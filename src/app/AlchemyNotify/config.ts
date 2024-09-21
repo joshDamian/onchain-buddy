@@ -9,7 +9,7 @@ import { SupportedChain } from '@/app/types';
 const WEBHOOK_IDS: {
     [key in SupportedChain]: string;
 } = {
-    Arbitrum: '',
+    Arbitrum: 'wh_jmfskush7rqxd4gz',
 };
 
 export const getWebhookId = (network: SupportedChain) => WEBHOOK_IDS[network];

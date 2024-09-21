@@ -19,6 +19,7 @@ const envSchema = z.object({
     ALCHEMY_AUTH_TOKEN: notEmptyStringSchema('ALCHEMY_AUTH_TOKEN'),
     WA_PHONE_NUMBER_ID: notEmptyStringSchema('WA_PHONE_NUMBER_ID'),
     WA_WEBHOOK_VERIFY_TOKEN: notEmptyStringSchema('WA_WEBHOOK_VERIFY_TOKEN'),
+    XATA_API_KEY: notEmptyStringSchema('XATA_API_KEY'),
 });
 
 const env = envSchema.parse(process.env);
