@@ -20,7 +20,7 @@ class OnchainBuddyLibrary {
             .getFirst();
 
         if (existingSubscription) {
-            return;
+            return existingSubscription;
         }
 
         await walletSubscriptionRepository.create({

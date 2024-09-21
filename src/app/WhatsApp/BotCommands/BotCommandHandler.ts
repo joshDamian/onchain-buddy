@@ -5,7 +5,7 @@ import {
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { DEFAULT_NETWORK } from '@/constants/strings';
-import { Address } from 'viem';
+import { Address, isAddress } from 'viem';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
 
@@ -50,18 +50,39 @@ class BotCommandHandler {
         wallet: string
     ) {
         // Handle wallet subscription
+        if (!isAddress(wallet)) {
+            await BotApi.sendWhatsappMessage(
+                phoneParams.businessPhoneNumberId,
+                MessageGenerators.generateTextMessage(
+                    phoneParams.userPhoneNumber,
+                    '❌ Invalid wallet address'
+                )
+            );
 
-        await OnchainBuddyLibrary.subscribeWalletNotification(
+            return;
+        }
+
+        const existingSubscription = await OnchainBuddyLibrary.subscribeWalletNotification(
             wallet as Address,
             DEFAULT_NETWORK,
             phoneParams.userPhoneNumber
         );
 
+        if (existingSubscription) {
+            await BotApi.sendWhatsappMessage(
+                phoneParams.businessPhoneNumberId,
+                MessageGenerators.generateTextMessage(
+                    phoneParams.userPhoneNumber,
+                    'ℹ Wallet already subscribed'
+                )
+            );
+        }
+
         await BotApi.sendWhatsappMessage(
             phoneParams.businessPhoneNumberId,
             MessageGenerators.generateTextMessage(
-                '✅ Wallet subscription successful',
-                phoneParams.userPhoneNumber
+                phoneParams.userPhoneNumber,
+                '✅ Wallet subscription successful'
             )
         );
     }
