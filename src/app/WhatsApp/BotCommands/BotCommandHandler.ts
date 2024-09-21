@@ -87,6 +87,7 @@ class BotCommandHandler {
                     'ℹ Wallet already subscribed'
                 )
             );
+            return;
         }
 
         await BotApi.sendWhatsappMessage(
