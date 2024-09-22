@@ -21,6 +21,7 @@ const envSchema = z.object({
     WA_WEBHOOK_VERIFY_TOKEN: notEmptyStringSchema('WA_WEBHOOK_VERIFY_TOKEN'),
     XATA_API_KEY: notEmptyStringSchema('XATA_API_KEY'),
     HOST_URL: z.string().url().default('https://onchain-buddy.onrender.com'),
+    PUPPETEER_EXECUTABLE_PATH: z.string().default(''),
 });
 
 const env = envSchema.parse(process.env);
