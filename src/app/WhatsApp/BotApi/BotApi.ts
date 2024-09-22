@@ -2,6 +2,7 @@ import env from '@/constants/env';
 import axios from 'axios';
 import { logServiceError } from '@/utils/logging';
 import { logSync } from '@/resources/logger';
+import { PhoneNumberParams } from '@/app/WhatsApp/types';
 
 class BotApi {
     private static readonly CLOUD_API_URL = env.WA_CLOUD_API_URL;
@@ -52,6 +53,59 @@ class BotApi {
             logSync('debug', 'Message marked as read successfully:', response.data); // Handle successful response (optional)
         } catch (error) {
             await logServiceError(error, 'Error marking message as read:');
+        }
+    }
+
+    public static async uploadMedia(businessPhoneNumberId: string, path: string, type: string) {
+        const endpoint = `${businessPhoneNumberId}/media`;
+
+        try {
+            const requestOptions = this.getRequestConfig();
+            const response = await axios.post<{ id: string }>(
+                `${this.CLOUD_API_URL}/${endpoint}`,
+                {
+                    file: 'analytic-files/images/0xb7625fad4cf494244a28b5f1b6b0a7f150dc1b88587425ddf89018ed51f5cac9.png',
+                    type: type,
+                    messaging_product: 'whatsapp',
+                },
+                requestOptions
+            );
+
+            logSync('debug', 'Media uploaded successfully:', response.data);
+
+            return response.data.id;
+        } catch (error) {
+            await logServiceError(error, 'Error uploading media:');
+        }
+    }
+
+    public static async sendImageMessage(
+        phoneNumberParams: PhoneNumberParams,
+        link: string,
+        caption: string = ''
+    ) {
+        const endpoint = `${phoneNumberParams.businessPhoneNumberId}/messages`;
+
+        try {
+            const requestOptions = this.getRequestConfig();
+            const response = await axios.post(
+                `${this.CLOUD_API_URL}/${endpoint}`,
+                {
+                    messaging_product: 'whatsapp',
+                    recipient_type: 'individual',
+                    to: phoneNumberParams.userPhoneNumber,
+                    type: 'image',
+                    image: {
+                        link: link,
+                        caption: caption,
+                    },
+                },
+                requestOptions
+            );
+
+            logSync('debug', 'Image message sent successfully:', response.data);
+        } catch (error) {
+            await logServiceError(error, 'Error sending image message:');
         }
     }
 }

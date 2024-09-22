@@ -4,6 +4,7 @@ import env from '@/constants/env';
 import { addAlchemyContextToRequest } from '@/app/AlchemyNotify/webhookUtils';
 import apiRoutes from '@/routes';
 import logger from '@/resources/logger';
+import renderingRoutes from '@/routes/renderingRoutes';
 
 const app = express();
 
@@ -23,6 +24,10 @@ app.get('/', async (_, res) => {
 });
 
 app.use('/api', apiRoutes, async () => {
+    // flush logs: ensure all logs are sent
+    await logger.flush();
+});
+app.use('/render', renderingRoutes, async () => {
     // flush logs: ensure all logs are sent
     await logger.flush();
 });

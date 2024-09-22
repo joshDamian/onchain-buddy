@@ -5,7 +5,7 @@ import {
 } from '@/app/WhatsApp/BotCommands/commands';
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
-import { DEFAULT_NETWORK } from '@/constants/strings';
+import { DEFAULT_NETWORK, LIVE_HOST_URL } from '@/constants/strings';
 import { Address, isAddress, isHash } from 'viem';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
@@ -13,6 +13,10 @@ import { getPublicClient } from '@/app/OnchainBuddy/viemClients';
 import { ankrArbitrumMainnet } from '@/app/OnchainBuddy/config';
 import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
+import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
+import env from '@/constants/env';
+import * as fs from 'node:fs';
+import { uploadFile } from '@/utils/ipfs-upload';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -147,6 +151,30 @@ class BotCommandHandler {
             phoneParams.businessPhoneNumberId,
             MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
         );
+
+        const imagePath = await OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
+            transactionHash,
+            ankrArbitrumMainnet.network,
+            env.HOST_URL ?? LIVE_HOST_URL
+        );
+
+        const fileBuffer = fs.readFileSync(imagePath);
+
+        const imageUrl = await uploadFile(new File([fileBuffer], `${transactionHash}.png`));
+
+        // const mediaId = await BotApi.uploadMedia(
+        //     phoneParams.businessPhoneNumberId,
+        //     imagePath,
+        //     'image'
+        // );
+        // if (!mediaId) {
+        //     logSync('error', 'Failed to upload media for transaction analytics');
+        //     return;
+        // }
+
+        console.log({ imageUrl });
+
+        await BotApi.sendImageMessage(phoneParams, imageUrl, 'Transaction Analytics');
     }
 
     public static isCommand(command: string) {
