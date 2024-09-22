@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 
 export const captureAndStorePageScreenshotAsImage = async (url: string, outputPath: string) => {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: 'shell' });
     const page = await browser.newPage();
 
     await page.goto(url, { waitUntil: 'networkidle2' });
@@ -12,7 +12,7 @@ export const captureAndStorePageScreenshotAsImage = async (url: string, outputPa
 };
 
 export const captureAndStorePageScreenshotAsPdf = async (url: string, outputPath: string) => {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ headless: 'shell' });
     const page = await browser.newPage();
 
     await page.goto(url, { waitUntil: 'networkidle2' });
