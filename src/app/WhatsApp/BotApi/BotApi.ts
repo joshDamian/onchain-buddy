@@ -64,7 +64,7 @@ class BotApi {
             const response = await axios.post<{ id: string }>(
                 `${this.CLOUD_API_URL}/${endpoint}`,
                 {
-                    file: 'analytic-files/images/0xb7625fad4cf494244a28b5f1b6b0a7f150dc1b88587425ddf89018ed51f5cac9.png',
+                    file: path,
                     type: type,
                     messaging_product: 'whatsapp',
                 },

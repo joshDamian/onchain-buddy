@@ -1,11 +1,9 @@
 import puppeteer from 'puppeteer';
-import env from '@/constants/env';
 
 // Todo: Use a global browser instance to avoid launching a new browser for each request
 export const captureAndStorePageScreenshotAsImage = async (url: string, outputPath?: string) => {
     const browser = await puppeteer.launch({
         headless: true,
-        executablePath: env.PUPPETEER_EXECUTABLE_PATH ? env.PUPPETEER_EXECUTABLE_PATH : undefined,
     });
     const page = await browser.newPage();
 
