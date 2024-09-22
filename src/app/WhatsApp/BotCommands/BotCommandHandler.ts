@@ -17,6 +17,7 @@ import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary'
 import env from '@/constants/env';
 import * as fs from 'node:fs';
 import { uploadFile } from '@/utils/ipfs-upload';
+import { logSync } from '@/resources/logger';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -152,13 +153,26 @@ class BotCommandHandler {
             MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
         );
 
-        const imagePath = await OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
+        const response = await OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
             transactionHash,
             ankrArbitrumMainnet.network,
             env.HOST_URL ?? LIVE_HOST_URL
         );
 
-        const fileBuffer = fs.readFileSync(imagePath);
+        let fileBuffer: Buffer | undefined = undefined;
+
+        if ('path' in response && response.path) {
+            fileBuffer = fs.readFileSync(response.path);
+        }
+
+        if ('buffer' in response && response.buffer) {
+            fileBuffer = Buffer.from(response.buffer);
+        }
+
+        if (!fileBuffer) {
+            logSync('error', 'Failed to get file buffer');
+            return;
+        }
 
         const imageUrl = await uploadFile(new File([fileBuffer], `${transactionHash}.png`));
 

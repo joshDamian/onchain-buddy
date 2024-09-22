@@ -36,14 +36,29 @@ class OnchainAnalyticsLibrary {
         transactionHash: string,
         network: SupportedChain,
         domain: string
-    ) {
+    ): Promise<
+        | {
+              path: string;
+          }
+        | {
+              buffer: Uint8Array;
+          }
+    > {
         const analyticsPageUrl = `${domain}/render/analytics/tx/${transactionHash}?network=${network}&level=basic`;
         // Generate an image from the analytics page
         const imageFilePath = path.join(this.GENERATED_IMAGES_PATH, `${transactionHash}.png`);
 
-        await captureAndStorePageScreenshotAsImage(analyticsPageUrl, imageFilePath);
+        const buffer = await captureAndStorePageScreenshotAsImage(analyticsPageUrl, imageFilePath);
 
-        return imageFilePath;
+        if (buffer) {
+            return {
+                buffer,
+            };
+        }
+
+        return {
+            path: imageFilePath,
+        };
     }
 }
 
