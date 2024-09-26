@@ -139,14 +139,14 @@ class BotCommandHandler {
                     resolve({
                         network: networkConfigs.find(
                             (networkConfig) => networkConfig.viemChain === client.chain
-                        ),
+                        )?.network,
                         transaction,
                     });
                 } catch (error) {
                     resolve({
                         network: networkConfigs.find(
                             (networkConfig) => networkConfig.viemChain === client.chain
-                        ),
+                        )?.network,
                         transaction: undefined,
                     });
                 }
@@ -165,7 +165,7 @@ class BotCommandHandler {
         >;
 
         const result = successfulSettlements.find((settlement) => {
-            return !!settlement.value;
+            return !!settlement.value?.transaction;
         })?.value;
 
         // Handle transaction query
