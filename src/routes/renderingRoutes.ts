@@ -1,8 +1,8 @@
 import express from 'express';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { SupportedChain } from '@/app/types';
-import { getPublicClient } from '@/app/OnchainBuddy/viemClients';
-import { getAppDefaultEvmConfig } from '@/app/OnchainBuddy/config';
+import { getPublicClient } from '@/resources/viem/viemClients';
+import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 
 const renderingRouter = express.Router();

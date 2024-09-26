@@ -6,11 +6,11 @@ import {
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { DEFAULT_NETWORK, LIVE_HOST_URL } from '@/constants/strings';
-import { Address, isAddress, isHash } from 'viem';
+import { Address, isAddress, isHash, TransactionReceipt } from 'viem';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
-import { getPublicClient } from '@/app/OnchainBuddy/viemClients';
-import { ankrArbitrumMainnet } from '@/app/OnchainBuddy/config';
+import { getPublicClient } from '@/resources/viem/viemClients';
+import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
@@ -18,6 +18,7 @@ import env from '@/constants/env';
 import * as fs from 'node:fs';
 import { uploadFile } from '@/utils/ipfs-upload';
 import { logSync } from '@/resources/logger';
+import { SUPPORTED_CHAINS, SupportedChain } from '@/app/types';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -108,10 +109,11 @@ class BotCommandHandler {
         phoneParams: PhoneNumberParams,
         transactionHash: string
     ) {
-        const defaultPublicClient = getPublicClient(
-            ankrArbitrumMainnet.viemChain,
-            ankrArbitrumMainnet.rpcUrl
-        );
+        const networkConfigs = SUPPORTED_CHAINS.map((chain) => getAppDefaultEvmConfig(chain));
+
+        const publicClients = networkConfigs.map((networkConfig) => {
+            return getPublicClient(networkConfig.viemChain, networkConfig.rpcUrl);
+        });
 
         if (!isHash(transactionHash)) {
             await BotApi.sendWhatsappMessage(
@@ -125,13 +127,40 @@ class BotCommandHandler {
             return;
         }
 
-        // Handle transaction query
-        const transaction = await OnchainBuddyLibrary.getTransactionByHash(
-            transactionHash,
-            defaultPublicClient
-        );
+        // Search for transaction in all networks
+        const promises = publicClients.map((client) => {
+            return new Promise(async (resolve) => {
+                const transaction = await OnchainBuddyLibrary.getTransactionByHash(
+                    transactionHash,
+                    client
+                );
 
-        if (!transaction) {
+                resolve({
+                    network: networkConfigs.find(
+                        (networkConfig) => networkConfig.viemChain === client.chain
+                    ),
+                    transaction,
+                });
+            });
+        });
+
+        const settlements = await Promise.allSettled(promises);
+
+        const successfulSettlements = settlements.filter(
+            (settlement) => settlement.status === 'fulfilled'
+        ) as Array<
+            PromiseFulfilledResult<{
+                network: SupportedChain;
+                transaction: TransactionReceipt;
+            }>
+        >;
+
+        const result = successfulSettlements.find((settlement) => {
+            return !!settlement.value;
+        })?.value;
+
+        // Handle transaction query
+        if (!result?.transaction) {
             await BotApi.sendWhatsappMessage(
                 phoneParams.businessPhoneNumberId,
                 MessageGenerators.generateTextMessage(
@@ -144,20 +173,21 @@ class BotCommandHandler {
         }
 
         const message = generateTransactionReceiptMessage(
-            transaction,
-            getTransactionExplorerUrl(transactionHash, ankrArbitrumMainnet.network)
+            result.transaction,
+            getTransactionExplorerUrl(transactionHash, result.network)
         );
 
-        await BotApi.sendWhatsappMessage(
-            phoneParams.businessPhoneNumberId,
-            MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
-        );
-
-        const response = await OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
-            transactionHash,
-            ankrArbitrumMainnet.network,
-            env.HOST_URL ?? LIVE_HOST_URL
-        );
+        const [_, response] = await Promise.all([
+            BotApi.sendWhatsappMessage(
+                phoneParams.businessPhoneNumberId,
+                MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
+            ),
+            OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
+                transactionHash,
+                result.network,
+                env.HOST_URL ?? LIVE_HOST_URL
+            ),
+        ]);
 
         let fileBuffer: Buffer | undefined = undefined;
 
@@ -175,18 +205,6 @@ class BotCommandHandler {
         }
 
         const imageUrl = await uploadFile(new File([fileBuffer], `${transactionHash}.png`));
-
-        // const mediaId = await BotApi.uploadMedia(
-        //     phoneParams.businessPhoneNumberId,
-        //     imagePath,
-        //     'image'
-        // );
-        // if (!mediaId) {
-        //     logSync('error', 'Failed to upload media for transaction analytics');
-        //     return;
-        // }
-
-        console.log({ imageUrl });
 
         await BotApi.sendImageMessage(phoneParams, imageUrl, 'Transaction Analytics');
     }

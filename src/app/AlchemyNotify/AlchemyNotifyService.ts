@@ -123,7 +123,7 @@ class AlchemyNotifyService {
         return response.status === OK;
     }
 
-    public static get signingKeys(): Record<SupportedChain, string> {
+    public static get signingKeys(): Partial<Record<SupportedChain, string>> {
         return {
             Arbitrum: env.ALCHEMY_NOTIFY_ARB_SIGNING_KEY,
         };

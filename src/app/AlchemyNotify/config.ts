@@ -7,7 +7,7 @@
 import { SupportedChain } from '@/app/types';
 
 const WEBHOOK_IDS: {
-    [key in SupportedChain]: string;
+    [key in SupportedChain]?: string;
 } = {
     Arbitrum: 'wh_jmfskush7rqxd4gz',
 };

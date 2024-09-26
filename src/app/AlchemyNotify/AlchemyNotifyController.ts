@@ -41,6 +41,11 @@ class AlchemyNotifyController {
         const networkAsSupportedChain = network as SupportedChain;
         const signingKey = AlchemyNotifyService.signingKeys[networkAsSupportedChain];
 
+        if (!signingKey) {
+            res.status(FORBIDDEN).send('Signature validation failed, unauthorized!');
+            return;
+        }
+
         if (!isValidSignatureForAlchemyRequest(req as AlchemyRequest, signingKey)) {
             res.status(FORBIDDEN).send('Signature validation failed, unauthorized!');
             return;
