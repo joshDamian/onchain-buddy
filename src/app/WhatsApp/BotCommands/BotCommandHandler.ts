@@ -130,17 +130,26 @@ class BotCommandHandler {
         // Search for transaction in all networks
         const promises = publicClients.map((client) => {
             return new Promise(async (resolve) => {
-                const transaction = await OnchainBuddyLibrary.getTransactionByHash(
-                    transactionHash,
-                    client
-                );
+                try {
+                    const transaction = await OnchainBuddyLibrary.getTransactionByHash(
+                        transactionHash,
+                        client
+                    );
 
-                resolve({
-                    network: networkConfigs.find(
-                        (networkConfig) => networkConfig.viemChain === client.chain
-                    ),
-                    transaction,
-                });
+                    resolve({
+                        network: networkConfigs.find(
+                            (networkConfig) => networkConfig.viemChain === client.chain
+                        ),
+                        transaction,
+                    });
+                } catch (error) {
+                    resolve({
+                        network: networkConfigs.find(
+                            (networkConfig) => networkConfig.viemChain === client.chain
+                        ),
+                        transaction: undefined,
+                    });
+                }
             });
         });
 
