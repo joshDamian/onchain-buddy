@@ -40,8 +40,6 @@ class OnchainAnalyticsLibrary {
             );
         });
 
-        console.log({ erc20TokenTransferLogs });
-
         const assetTransfers = await this.decodeTokenTransfers(erc20TokenTransferLogs, network);
 
         const networkConfig = getAppDefaultEvmConfig(network);
