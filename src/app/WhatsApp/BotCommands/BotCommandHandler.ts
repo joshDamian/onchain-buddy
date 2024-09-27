@@ -157,9 +157,7 @@ class BotCommandHandler {
         ]);
         const endedAtAnalytics = Date.now();
 
-        logSync('info', `Transaction analytics took ${endedAtAnalytics - startedAtAnalytics}ms`, {
-            response,
-        });
+        logSync('info', `Transaction analytics took ${endedAtAnalytics - startedAtAnalytics}ms`);
 
         let fileBuffer: Buffer | undefined = undefined;
 
