@@ -11,12 +11,12 @@ import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import { generateReceivedTokenMessage, generateSentTokenMessage } from '@/utils/whatsapp-messages';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { Address } from 'viem';
+import TokenMetadataQueryLibrary from '@/app/Subgraphs/TokenMetadataQuery';
+import { TRANSFER_EVENT_TOPIC } from '@/constants/strings';
 
 enum AlchemyActivityCategory {
     TOKEN = 'token',
 }
-
-const transferLogTopicHash = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
 class AlchemyNotifyService {
     private static readonly BASE_API_URL = BASE_URL;
@@ -29,6 +29,7 @@ class AlchemyNotifyService {
             return;
         }
 
+        // Supports only token transfers for now
         const targetActivity = payload.event.activity.find((activity) => {
             const rawContract = activity.rawContract;
             const activityCategory = activity.category;
@@ -36,7 +37,7 @@ class AlchemyNotifyService {
 
             return (
                 activityCategory === AlchemyActivityCategory.TOKEN &&
-                activityLog.topics.includes(transferLogTopicHash) &&
+                activityLog.topics.includes(TRANSFER_EVENT_TOPIC) &&
                 rawContract
             );
         });
@@ -47,9 +48,10 @@ class AlchemyNotifyService {
 
         const { fromAddress, toAddress, value, rawContract } = targetActivity;
 
-        const [fromWalletSubscribers, toWalletSubscribers] = await Promise.all([
+        const [fromWalletSubscribers, toWalletSubscribers, tokenMetadata] = await Promise.all([
             OnchainBuddyLibrary.findSubscriptionsByWalletAddress(fromAddress as Address),
             OnchainBuddyLibrary.findSubscriptionsByWalletAddress(toAddress as Address),
+            TokenMetadataQueryLibrary.getErc20TokenMetadata(rawContract.address, network),
         ]);
 
         if (fromWalletSubscribers.length > 0) {
@@ -57,7 +59,7 @@ class AlchemyNotifyService {
             const message = generateSentTokenMessage({
                 tokenAmount: value.toString(),
                 // Todo: Write functionality to get asset name
-                assetName: '',
+                assetName: tokenMetadata ? tokenMetadata.symbol : '',
                 assetNetwork: network,
                 receiverAddress: toAddress,
                 transactionHash: targetActivity.hash,
@@ -80,7 +82,7 @@ class AlchemyNotifyService {
             const message = generateReceivedTokenMessage({
                 tokenAmount: value.toString(),
                 // Todo: Write functionality to get asset name
-                assetName: '',
+                assetName: tokenMetadata ? tokenMetadata.symbol : '',
                 assetNetwork: network,
                 senderAddress: fromAddress,
                 transactionHash: targetActivity.hash,

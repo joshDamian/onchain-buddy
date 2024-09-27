@@ -36,8 +36,17 @@ class OnchainBuddyLibrary {
             .getAll();
     }
 
-    public static async getTransactionByHash(transactionHash: string, publicClient: PublicClient) {
+    public static async getTransactionReceiptByHash(
+        transactionHash: string,
+        publicClient: PublicClient
+    ) {
         return await publicClient.getTransactionReceipt({
+            hash: transactionHash as Address,
+        });
+    }
+
+    public static async getTransactionByHash(transactionHash: string, publicClient: PublicClient) {
+        return await publicClient.getTransaction({
             hash: transactionHash as Address,
         });
     }
