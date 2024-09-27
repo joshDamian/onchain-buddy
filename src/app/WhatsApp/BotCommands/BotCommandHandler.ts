@@ -153,11 +153,11 @@ class BotCommandHandler {
 
         let fileBuffer: Buffer | undefined = undefined;
 
-        if ('path' in response && response.path) {
+        if (response && 'path' in response && response.path) {
             fileBuffer = fs.readFileSync(response.path);
         }
 
-        if ('buffer' in response && response.buffer) {
+        if (response && 'buffer' in response && response.buffer) {
             fileBuffer = Buffer.from(response.buffer);
         }
 

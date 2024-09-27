@@ -1,7 +1,8 @@
 import { SupportedChain } from '@/app/types';
 import AlchemyNotifyService from '@/app/AlchemyNotify/AlchemyNotifyService';
-import { Address, PublicClient } from 'viem';
+import { Address, getAddress, PublicClient } from 'viem';
 import { walletSubscriptionRepository } from '@/resources/data/db';
+import { TOKEN_METADATA_ABI } from '@/resources/abis/erc-20';
 
 class OnchainBuddyLibrary {
     public static async subscribeWalletNotification(
@@ -49,6 +50,35 @@ class OnchainBuddyLibrary {
         return await publicClient.getTransaction({
             hash: transactionHash as Address,
         });
+    }
+
+    public static async getErc20TokenMetadata(tokenAddress: string, publicClient: PublicClient) {
+        const validTokenAddress = getAddress(tokenAddress);
+
+        const [name, symbol, decimals] = await Promise.all([
+            publicClient.readContract({
+                abi: TOKEN_METADATA_ABI,
+                functionName: 'name',
+                address: validTokenAddress,
+            }),
+            publicClient.readContract({
+                abi: TOKEN_METADATA_ABI,
+                functionName: 'symbol',
+                address: validTokenAddress,
+            }),
+            publicClient.readContract({
+                abi: TOKEN_METADATA_ABI,
+                functionName: 'decimals',
+                address: validTokenAddress,
+            }),
+        ]);
+
+        return {
+            id: validTokenAddress,
+            name,
+            symbol,
+            decimals,
+        };
     }
 }
 

@@ -14,7 +14,7 @@ import TransactionSummary from '@/resources/templates/TransactionSummary';
 import { ComponentProps } from 'react';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
 import { captureAndStorePageScreenshotAsImage } from '@/utils/page-capture';
-import { TRANSFER_EVENT_TOPIC } from '@/constants/strings';
+import { TRANSFER_EVENT_TOPIC, ZERO_DATA } from '@/constants/strings';
 import { TRANSFER_EVENT_ABI } from '@/resources/abis/erc-20';
 import TokenMetadataQueryLibrary from '@/app/Subgraphs/TokenMetadataQuery';
 import { TokenMetadata } from '@/app/Subgraphs/schema';
@@ -34,8 +34,13 @@ class OnchainAnalyticsLibrary {
         network: SupportedChain
     ) {
         const erc20TokenTransferLogs = transactionReceipt.logs.filter((log) => {
-            return (log.topics as Array<Hex>).includes(TRANSFER_EVENT_TOPIC as Hex);
+            return (
+                (log.topics as Array<Hex>).includes(TRANSFER_EVENT_TOPIC as Hex) &&
+                log.data !== ZERO_DATA
+            );
         });
+
+        console.log({ erc20TokenTransferLogs });
 
         const assetTransfers = await this.decodeTokenTransfers(erc20TokenTransferLogs, network);
 
@@ -85,7 +90,7 @@ class OnchainAnalyticsLibrary {
         const uniqueTokenAddresses = Array.from(new Set(tokenAddresses));
 
         const tokensMetadataPromises = uniqueTokenAddresses.map((tokenAddress) => {
-            return TokenMetadataQueryLibrary.getErc20TokenMetadata(tokenAddress, chain);
+            return this.getErc20TokenMetadata(tokenAddress, chain);
         });
 
         const tokensMetadataSettlements = await Promise.allSettled(tokensMetadataPromises);
@@ -97,14 +102,14 @@ class OnchainAnalyticsLibrary {
         const successfulTokensMetadataMap = successfulTokensMetadata.reduce(
             (acc, settlement) => {
                 if (settlement.value === null) return acc;
-                acc[settlement.value.id] = settlement.value;
+                acc[settlement.value.id.toLowerCase()] = settlement.value;
                 return acc;
             },
             {} as Record<string, TokenMetadata>
         );
 
         return assetTransfers.map((transfer) => {
-            const tokenMetadata = successfulTokensMetadataMap[transfer.tokenAddress];
+            const tokenMetadata = successfulTokensMetadataMap[transfer.tokenAddress.toLowerCase()];
 
             return {
                 ...transfer,
@@ -128,22 +133,17 @@ class OnchainAnalyticsLibrary {
         | {
               buffer: Uint8Array;
           }
+        | undefined
     > {
         const analyticsPageUrl = `${domain}/render/analytics/tx/${transactionHash}?level=basic&network=${network}&origin=whatsapp`;
-        // Generate an image from the analytics page
-        const imageFilePath = path.join(this.GENERATED_IMAGES_PATH, `${transactionHash}.png`);
 
-        const buffer = await captureAndStorePageScreenshotAsImage(analyticsPageUrl, imageFilePath);
+        const buffer = await captureAndStorePageScreenshotAsImage(analyticsPageUrl);
 
         if (buffer) {
             return {
                 buffer,
             };
         }
-
-        return {
-            path: imageFilePath,
-        };
     }
 
     public static async searchTransactionByHash(transactionHash: string) {
@@ -193,6 +193,24 @@ class OnchainAnalyticsLibrary {
         return successfulSettlements.find((settlement) => {
             return !!settlement.value?.transaction;
         })?.value;
+    }
+
+    public static async getErc20TokenMetadata(tokenAddress: string, chain: SupportedChain) {
+        // Prefer using the subgraph to fetch token metadata
+        const tokenMetadata = await TokenMetadataQueryLibrary.getErc20TokenMetadata(
+            tokenAddress,
+            chain
+        );
+
+        if (tokenMetadata) {
+            return tokenMetadata;
+        }
+
+        // Fallback to using the public client
+        const networkConfig = getAppDefaultEvmConfig(chain);
+        const publicClient = getPublicClient(networkConfig.viemChain, networkConfig.rpcUrl);
+
+        return await OnchainBuddyLibrary.getErc20TokenMetadata(tokenAddress, publicClient);
     }
 }
 

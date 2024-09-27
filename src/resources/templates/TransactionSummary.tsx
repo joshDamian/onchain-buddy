@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Send, Download } from 'react-feather';
 
 type Erc20Transfers = {
     formattedAmount: string;
-    tokenMetadata: { symbol: string; name: string; id: string; decimals: number };
+    tokenMetadata: { symbol: string; name: string; id: string; decimals: number } | null;
     from: `0x${string}`;
     to: `0x${string}`;
     amount: bigint;
@@ -106,7 +106,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = (props) => {
                                             }
                                         >
                                             {transfer.formattedAmount}{' '}
-                                            {transfer.tokenMetadata.symbol}
+                                            {transfer.tokenMetadata?.symbol}
                                         </div>
                                         <div
                                             className={

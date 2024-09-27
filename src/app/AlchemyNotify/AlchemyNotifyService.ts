@@ -11,8 +11,8 @@ import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import { generateReceivedTokenMessage, generateSentTokenMessage } from '@/utils/whatsapp-messages';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 import { Address } from 'viem';
-import TokenMetadataQueryLibrary from '@/app/Subgraphs/TokenMetadataQuery';
 import { TRANSFER_EVENT_TOPIC } from '@/constants/strings';
+import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 
 enum AlchemyActivityCategory {
     TOKEN = 'token',
@@ -51,7 +51,7 @@ class AlchemyNotifyService {
         const [fromWalletSubscribers, toWalletSubscribers, tokenMetadata] = await Promise.all([
             OnchainBuddyLibrary.findSubscriptionsByWalletAddress(fromAddress as Address),
             OnchainBuddyLibrary.findSubscriptionsByWalletAddress(toAddress as Address),
-            TokenMetadataQueryLibrary.getErc20TokenMetadata(rawContract.address, network),
+            OnchainAnalyticsLibrary.getErc20TokenMetadata(rawContract.address, network),
         ]);
 
         if (fromWalletSubscribers.length > 0) {
