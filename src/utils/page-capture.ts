@@ -10,7 +10,12 @@ export const captureAndStorePageScreenshotAsImage = async (url: string, outputPa
     await page.goto(url, { waitUntil: 'networkidle2' });
 
     if (!outputPath) {
-        return await page.screenshot({ path: outputPath, fullPage: true, encoding: 'binary' });
+        return await page.screenshot({
+            path: outputPath,
+            fullPage: true,
+            encoding: 'binary',
+            optimizeForSpeed: true,
+        });
     }
 
     await page.screenshot({ path: outputPath, fullPage: true });
