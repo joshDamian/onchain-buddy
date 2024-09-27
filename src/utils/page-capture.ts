@@ -7,7 +7,7 @@ export const captureAndStorePageScreenshotAsImage = async (url: string, outputPa
     });
     const page = await browser.newPage();
 
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
 
     if (!outputPath) {
         return await page.screenshot({
