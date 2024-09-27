@@ -8,9 +8,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "start:render": "tsx build/index.js",
+    "start:render": "tsx src/index.ts",
     "build": "tsc",
-    "build:render": "pnpm puppeteer browsers install && pnpm run build"
+    "build:render": "pnpm puppeteer browsers install"
   },
   "keywords": [],
   "author": "",
