@@ -118,8 +118,12 @@ class BotCommandHandler {
             return;
         }
 
+        const startedAt = Date.now();
         const searchedTransaction =
             await OnchainAnalyticsLibrary.searchTransactionByHash(transactionHash);
+        const endedAt = Date.now();
+
+        logSync('info', `Transaction search took ${endedAt - startedAt}ms`);
 
         // Handle transaction query
         if (!searchedTransaction) {
@@ -139,6 +143,7 @@ class BotCommandHandler {
             getTransactionExplorerUrl(transactionHash, searchedTransaction.network)
         );
 
+        const startedAtAnalytics = Date.now();
         const [_, response] = await Promise.all([
             BotApi.sendWhatsappMessage(
                 phoneParams.businessPhoneNumberId,
@@ -150,6 +155,11 @@ class BotCommandHandler {
                 searchedTransaction.network
             ),
         ]);
+        const endedAtAnalytics = Date.now();
+
+        logSync('info', `Transaction analytics took ${endedAtAnalytics - startedAtAnalytics}ms`, {
+            response,
+        });
 
         let fileBuffer: Buffer | undefined = undefined;
 
@@ -166,7 +176,13 @@ class BotCommandHandler {
             return;
         }
 
+        const startedAtUpload = Date.now();
         const imageUrl = await uploadFile(new File([fileBuffer], `${transactionHash}.png`));
+        const endedAtUpload = Date.now();
+
+        logSync('info', `Image upload took ${endedAtUpload - startedAtUpload}ms`, {
+            imageUrl,
+        });
 
         await BotApi.sendImageMessage(phoneParams, imageUrl, 'Transaction Analytics');
     }
