@@ -20,7 +20,7 @@ import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesse
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
-const BACKGROUND_PROCESSES_SCRIPTS_FOLDER = path.join(__dirname, '../backgroundProcesses');
+const BACKGROUND_PROCESSES_SCRIPTS_FOLDER = path.join(__dirname, '..', 'backgroundProcesses');
 
 class BotCommandHandler {
     public static async handlePossibleCommand(
@@ -160,7 +160,7 @@ class BotCommandHandler {
 
         // Spawn the background process
         const backgroundProcess = spawn(
-            'tsx',
+            'bun',
             [
                 path.join(BACKGROUND_PROCESSES_SCRIPTS_FOLDER, 'generate-transaction-image.ts'),
                 serializedParams,
@@ -170,9 +170,6 @@ class BotCommandHandler {
             }
         );
 
-        backgroundProcess.on('spawn', () => {
-            logSync('info', 'Background process spawned:');
-        });
         backgroundProcess.on('error', (err) => {
             logSync('error', 'Failed to start background process:', err);
         });

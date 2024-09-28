@@ -1,10 +1,10 @@
 import { SupportedChain } from '@/app/types';
 import { SUBGRAPH_BASE_URL, SubgraphIds } from '@/app/Subgraphs/config';
-import { gql } from 'graphql-request';
+import { gql } from '@urql/core';
 import { querySubgraph } from '@/utils/subgraphs';
 import env from '@/constants/env';
 import logger from '@/resources/logger';
-import { queryTokenMetadataSchema } from '@/app/Subgraphs/schema';
+import { queryTokenMetadataSchema, TokenMetadata } from '@/app/Subgraphs/schema';
 
 class TokenMetadataQueryLibrary {
     public static readonly SUPPORTED_CHAINS: Array<SupportedChain> = [
@@ -20,7 +20,9 @@ class TokenMetadataQueryLibrary {
     public static async getErc20TokenMetadata(tokenAddress: string, chain: SupportedChain) {
         const subgraphId = this.subgraphIds[chain];
 
-        const query = gql`
+        const query = gql<{
+            token: TokenMetadata;
+        }>`
             {
                 token(id: "${tokenAddress.toLowerCase()}") {
                     id
@@ -31,22 +33,22 @@ class TokenMetadataQueryLibrary {
             }
         `;
 
-        try {
-            const response = (await querySubgraph({
-                subgraphBaseUrl: this.SUBGRAPH_BASE_URL,
-                subgraphId,
-                query,
-                subgraphApiKey: this.SUBGRAPH_API_KEY,
-            })) as { token: Record<string, string> };
+        const response = await querySubgraph({
+            subgraphBaseUrl: this.SUBGRAPH_BASE_URL,
+            subgraphId,
+            query,
+            subgraphApiKey: this.SUBGRAPH_API_KEY,
+        });
 
-            return queryTokenMetadataSchema.parse(response.token);
-        } catch (error) {
+        if (response.error) {
             void logger.error(`Error fetching token metadata for ${tokenAddress} on ${chain}`, {
-                error,
+                error: response.error,
             });
 
             return null;
         }
+
+        return queryTokenMetadataSchema.parse(response.data?.token);
     }
 
     private static get subgraphIds() {
