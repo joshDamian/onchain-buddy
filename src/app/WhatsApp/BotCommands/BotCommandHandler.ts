@@ -121,6 +121,14 @@ class BotCommandHandler {
             return;
         }
 
+        void BotApi.sendWhatsappMessage(
+            phoneParams.businessPhoneNumberId,
+            MessageGenerators.generateTextMessage(
+                phoneParams.userPhoneNumber,
+                '🔍 Searching for transaction...'
+            )
+        );
+
         const startedAt = Date.now();
         const searchedTransaction =
             await OnchainAnalyticsLibrary.searchTransactionByHash(transactionHash);
