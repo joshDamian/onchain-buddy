@@ -10,13 +10,13 @@ import { Address, isAddress, isHash } from 'viem';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
 import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
-import { getTransactionExplorerUrl } from '@/resources/explorer';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 import env from '@/constants/env';
 import { spawn } from 'child_process';
 import { logSync } from '@/resources/logger';
 import * as path from 'node:path';
 import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesses/generate-transaction-image';
+import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
 
@@ -141,9 +141,13 @@ class BotCommandHandler {
             return;
         }
 
+        const nativeCurrencySymbol = getAppDefaultEvmConfig(searchedTransaction.network).viemChain
+            .nativeCurrency.symbol;
+
         const message = generateTransactionReceiptMessage(
             searchedTransaction.transaction,
-            getTransactionExplorerUrl(transactionHash, searchedTransaction.network)
+            searchedTransaction.network,
+            nativeCurrencySymbol
         );
 
         await BotApi.sendWhatsappMessage(

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { uploadFile } from '@/utils/ipfs-upload';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
+import { getTransactionExplorerUrl } from '@/resources/explorer';
 
 export type GenerateTransactionImageProps = {
     transactionHash: string;
@@ -49,7 +50,9 @@ async function generateBasicTransactionImage(params: GenerateTransactionImagePro
         imageUrl,
     });
 
-    await BotApi.sendImageMessage(phoneParams, imageUrl, 'Transaction Analytics');
+    const explorerUrl = getTransactionExplorerUrl(transactionHash, network);
+
+    await BotApi.sendImageMessage(phoneParams, imageUrl, `🔗 View on explorer: ${explorerUrl}`);
 }
 
 const txParams: GenerateTransactionImageProps = JSON.parse(process.argv[2]);

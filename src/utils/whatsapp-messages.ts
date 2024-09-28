@@ -1,4 +1,5 @@
 import { formatEther, TransactionReceipt } from 'viem';
+import { SupportedChain } from '@/app/types';
 
 export function generateReceivedTokenMessage(params: {
     tokenAmount: string;
@@ -30,7 +31,8 @@ export function generateSentTokenMessage(params: {
 
 export function generateTransactionReceiptMessage(
     receipt: TransactionReceipt,
-    explorerUrl: string
+    chain: SupportedChain,
+    nativeCurrencySymbol: string
 ): string {
-    return `🧾 *Transaction Receipt:*\n\n🔗 *Transaction Hash:* ${receipt.transactionHash}\n\n📅 *Block Number:* ${receipt.blockNumber}\n\n🔢 *Gas Used:* ${receipt.gasUsed}\n\n🔢 *Gas Price:* ${formatEther(receipt.gasUsed)}\n\n🔢 *Cumulative Gas Used:* ${receipt.cumulativeGasUsed}\n\n🔢 *Status:* ${receipt.status}\n\nView in explorer: ${explorerUrl}`;
+    return `🧾 *Transaction Found on ${chain}*\n\n📅 *Block Number:* ${receipt.blockNumber}\n\n🔢 *Gas Used:* ${receipt.gasUsed}\n\n🔢 *Transaction Fee:* ${formatEther(receipt.gasUsed * receipt.effectiveGasPrice)} ${nativeCurrencySymbol}\n\n🔲 *Status:* ${receipt.status}\n\n_Please wait while the bot summarizes the transaction_`;
 }
