@@ -13,11 +13,14 @@ import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 import env from '@/constants/env';
-import * as fs from 'node:fs';
-import { uploadFile } from '@/utils/ipfs-upload';
+import { spawn } from 'child_process';
 import { logSync } from '@/resources/logger';
+import * as path from 'node:path';
+import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesses/generate-transaction-image';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
+
+const BACKGROUND_PROCESSES_SCRIPTS_FOLDER = path.join(__dirname, '../backgroundProcesses');
 
 class BotCommandHandler {
     public static async handlePossibleCommand(
@@ -143,46 +146,36 @@ class BotCommandHandler {
             getTransactionExplorerUrl(transactionHash, searchedTransaction.network)
         );
 
-        const startedAtAnalytics = Date.now();
-        const [_, response] = await Promise.all([
-            BotApi.sendWhatsappMessage(
-                phoneParams.businessPhoneNumberId,
-                MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
-            ),
-            OnchainAnalyticsLibrary.exportBasicTransactionAnalyticsToImage(
-                transactionHash,
-                env.HOST_URL ?? LIVE_HOST_URL,
-                searchedTransaction.network
-            ),
-        ]);
-        const endedAtAnalytics = Date.now();
+        await BotApi.sendWhatsappMessage(
+            phoneParams.businessPhoneNumberId,
+            MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
+        );
 
-        logSync('info', `Transaction analytics took ${endedAtAnalytics - startedAtAnalytics}ms`);
+        const serializedParams = JSON.stringify({
+            transactionHash,
+            hostUrl: env.HOST_URL ?? LIVE_HOST_URL,
+            network: searchedTransaction.network,
+            phoneParams,
+        } satisfies GenerateTransactionImageProps);
 
-        let fileBuffer: Buffer | undefined = undefined;
+        // Spawn the background process
+        const backgroundProcess = spawn(
+            'tsx',
+            [
+                path.join(BACKGROUND_PROCESSES_SCRIPTS_FOLDER, 'generate-transaction-image.ts'),
+                serializedParams,
+            ],
+            {
+                stdio: 'inherit', // Pipe all stdio to the parent process
+            }
+        );
 
-        if (response && 'path' in response && response.path) {
-            fileBuffer = fs.readFileSync(response.path);
-        }
-
-        if (response && 'buffer' in response && response.buffer) {
-            fileBuffer = Buffer.from(response.buffer);
-        }
-
-        if (!fileBuffer) {
-            logSync('error', 'Failed to get file buffer');
-            return;
-        }
-
-        const startedAtUpload = Date.now();
-        const imageUrl = await uploadFile(new File([fileBuffer], `${transactionHash}.png`));
-        const endedAtUpload = Date.now();
-
-        logSync('info', `Image upload took ${endedAtUpload - startedAtUpload}ms`, {
-            imageUrl,
+        backgroundProcess.on('spawn', () => {
+            logSync('info', 'Background process spawned:');
         });
-
-        await BotApi.sendImageMessage(phoneParams, imageUrl, 'Transaction Analytics');
+        backgroundProcess.on('error', (err) => {
+            logSync('error', 'Failed to start background process:', err);
+        });
     }
 
     public static isCommand(command: string) {
