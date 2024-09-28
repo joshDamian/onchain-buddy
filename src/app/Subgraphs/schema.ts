@@ -4,7 +4,7 @@ export const queryTokenMetadataSchema = z.object({
     name: z.string(),
     symbol: z.string(),
     id: z.string(),
-    decimals: z.string().transform((val) => parseInt(val, 10)),
+    decimals: z.coerce.number(),
 });
 
 export type TokenMetadata = z.infer<typeof queryTokenMetadataSchema>;

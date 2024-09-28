@@ -1,6 +1,6 @@
 import express from 'express';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
-import { SupportedChain } from '@/app/types';
+import { SUPPORTED_CHAINS, SupportedChain } from '@/app/types';
 import { getPublicClient } from '@/resources/viem/viemClients';
 import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
@@ -14,6 +14,10 @@ renderingRouter.get('/analytics/tx/:transactionHash', async (req, res) => {
         origin: 'whatsapp' | 'web';
         network: SupportedChain;
     };
+
+    if (!SUPPORTED_CHAINS.includes(network)) {
+        return res.status(400).send('Invalid network');
+    }
 
     const networkConfig = getAppDefaultEvmConfig(network);
     const publicClient = getPublicClient(networkConfig.viemChain, networkConfig.rpcUrl);
