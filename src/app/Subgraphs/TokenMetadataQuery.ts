@@ -48,6 +48,10 @@ class TokenMetadataQueryLibrary {
             return null;
         }
 
+        if (!response.data?.token) {
+            return null;
+        }
+
         return queryTokenMetadataSchema.parse(response.data?.token);
     }
 

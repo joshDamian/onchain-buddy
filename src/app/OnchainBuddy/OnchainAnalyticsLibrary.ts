@@ -25,7 +25,6 @@ import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
 type TransactionSummaryProps = ComponentProps<typeof TransactionSummary>;
 
 class OnchainAnalyticsLibrary {
-    private static readonly GENERATED_IMAGES_PATH = path.join('./', 'analytic-files', 'images');
     private static readonly GENERATED_PDFS_PATH = path.join('./', 'analytic-files', 'pdfs');
 
     public static async generateBasicTransactionSummaryPage(

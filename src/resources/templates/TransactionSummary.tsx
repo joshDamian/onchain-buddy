@@ -40,14 +40,14 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = (props) => {
                 <h1 className={'text-center font-semibold mb-3 text-3xl'}>{props.title}</h1>
                 <div className={'flex w-fit mx-auto mb-6 items-center justify-center'}>
                     <span className={'text-sm text-center text-[#0b8793]'}>
-                        🆔 {props.transactionHash}
+                        {props.transactionHash}
                     </span>
                 </div>
 
-                <section className={'flex flex-col divide-y divide-[#0b8793]'}>
+                <section className={'flex flex-col divide-y-[0.5px] divide-[#0b8793]'}>
                     {/* Transaction Info Section */}
                     <div className={'flex flex-col pb-5 gap-5'}>
-                        <h3 className={'font-semibold border-t pt-5 border-[#0b8793]'}>
+                        <h3 className={'font-semibold border-t-[0.5px] pt-5 border-[#0b8793]'}>
                             Transaction Info
                         </h3>
                         <div className={'flex flex-col gap-6'}>
@@ -102,7 +102,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = (props) => {
                                     <div key={index}>
                                         <div
                                             className={
-                                                'p-3 text-xs font-semibold border text-[#0b8793] border text-center'
+                                                'p-3 text-xs font-semibold border text-[#0b8793] border-[0.5px] text-center'
                                             }
                                         >
                                             {transfer.formattedAmount}{' '}
@@ -110,7 +110,7 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = (props) => {
                                         </div>
                                         <div
                                             className={
-                                                'p-3 border-b border-x border text-[10px] flex flex-col gap-2'
+                                                'p-3 border-b border-x border-[0.5px] text-[10px] flex flex-col gap-2'
                                             }
                                         >
                                             <span className={'flex items-center gap-1'}>
