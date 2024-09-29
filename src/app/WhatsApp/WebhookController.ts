@@ -6,6 +6,9 @@ import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import { Message, WebhookRequestBody, WhatsAppMessageType } from '@/app/WhatsApp/types';
 import env from '@/constants/env';
 import BotCommandHandler from '@/app/WhatsApp/BotCommands/BotCommandHandler';
+import AITextContextParser from '@/app/WhatsApp/TextContexts/AITextContextParser';
+import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
+import TextContextActionHandler from '@/app/WhatsApp/TextContexts/TextContextActionHandler';
 
 class WebhookController {
     public static async receiveMessageWebhook(req: Request, res: Response) {
@@ -100,7 +103,7 @@ class WebhookController {
         businessPhoneNumberId: string,
         displayName: string
     ) {
-        const { type, from, text, interactive } = message;
+        const { type, from, text } = message;
 
         logSync('debug', `message data type: ${typeof message}`, {
             message,
@@ -124,6 +127,23 @@ class WebhookController {
                     return;
                 }
             }
+
+            // Handle text messages
+            const contextOrMessageResponse = await AITextContextParser.deriveContextFromPrompt(
+                text.body
+            );
+
+            if (typeof contextOrMessageResponse === 'string') {
+                await BotApi.sendWhatsappMessage(
+                    businessPhoneNumberId,
+                    MessageGenerators.generateTextMessage(from, contextOrMessageResponse)
+                );
+
+                return;
+            }
+
+            // Handle context
+            await TextContextActionHandler.handleAction(contextOrMessageResponse, phoneParams);
         }
     }
 }

@@ -4,29 +4,15 @@ import {
     SubscribeWalletMatchGroups,
 } from '@/app/WhatsApp/BotCommands/commands';
 import { PhoneNumberParams } from '@/app/WhatsApp/types';
-import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
-import { DEFAULT_NETWORK, LIVE_HOST_URL } from '@/constants/strings';
-import { Address, isAddress, isHash } from 'viem';
-import BotApi from '@/app/WhatsApp/BotApi/BotApi';
-import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
-import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
-import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
-import env from '@/constants/env';
-import { spawn } from 'child_process';
-import { logSync } from '@/resources/logger';
-import * as path from 'node:path';
-import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesses/generate-transaction-image';
-import { getAppDefaultEvmConfig } from '@/resources/evm.config';
+import QueryMessageHandlers from '@/app/WhatsApp/QueryMessageHandlers';
 
 type BotCommand = keyof typeof BOT_COMMANDS_REGEX;
-
-const BACKGROUND_PROCESSES_SCRIPTS_FOLDER = path.join(__dirname, '..', 'backgroundProcesses');
 
 class BotCommandHandler {
     public static async handlePossibleCommand(
         text: string,
         phoneParams: PhoneNumberParams,
-        displayName: string
+        _displayName: string
     ): Promise<{
         handled: boolean;
     }> {
@@ -66,125 +52,17 @@ class BotCommandHandler {
         phoneParams: PhoneNumberParams,
         wallet: string
     ) {
-        // Handle wallet subscription
-        if (!isAddress(wallet)) {
-            await BotApi.sendWhatsappMessage(
-                phoneParams.businessPhoneNumberId,
-                MessageGenerators.generateTextMessage(
-                    phoneParams.userPhoneNumber,
-                    '❌ Invalid wallet address'
-                )
-            );
-
-            return;
-        }
-
-        const existingSubscription = await OnchainBuddyLibrary.subscribeWalletNotification(
-            wallet as Address,
-            DEFAULT_NETWORK,
-            phoneParams.userPhoneNumber
-        );
-
-        if (existingSubscription) {
-            await BotApi.sendWhatsappMessage(
-                phoneParams.businessPhoneNumberId,
-                MessageGenerators.generateTextMessage(
-                    phoneParams.userPhoneNumber,
-                    'ℹ Wallet already subscribed'
-                )
-            );
-            return;
-        }
-
-        await BotApi.sendWhatsappMessage(
-            phoneParams.businessPhoneNumberId,
-            MessageGenerators.generateTextMessage(
-                phoneParams.userPhoneNumber,
-                '✅ Wallet subscription successful'
-            )
-        );
+        await QueryMessageHandlers.handleWalletSubscriptionRelatedMessage(phoneParams, wallet);
     }
 
     public static async handleTransactionQueryCommand(
         phoneParams: PhoneNumberParams,
         transactionHash: string
     ) {
-        if (!isHash(transactionHash)) {
-            await BotApi.sendWhatsappMessage(
-                phoneParams.businessPhoneNumberId,
-                MessageGenerators.generateTextMessage(
-                    phoneParams.userPhoneNumber,
-                    '❌ Invalid transaction hash'
-                )
-            );
-
-            return;
-        }
-
-        void BotApi.sendWhatsappMessage(
-            phoneParams.businessPhoneNumberId,
-            MessageGenerators.generateTextMessage(
-                phoneParams.userPhoneNumber,
-                '🔍 Searching for transaction...'
-            )
-        );
-
-        const startedAt = Date.now();
-        const searchedTransaction =
-            await OnchainAnalyticsLibrary.searchTransactionByHash(transactionHash);
-        const endedAt = Date.now();
-
-        logSync('info', `Transaction search took ${endedAt - startedAt}ms`);
-
-        // Handle transaction query
-        if (!searchedTransaction) {
-            await BotApi.sendWhatsappMessage(
-                phoneParams.businessPhoneNumberId,
-                MessageGenerators.generateTextMessage(
-                    phoneParams.userPhoneNumber,
-                    '❌ Transaction not found'
-                )
-            );
-
-            return;
-        }
-
-        const nativeCurrencySymbol = getAppDefaultEvmConfig(searchedTransaction.network).viemChain
-            .nativeCurrency.symbol;
-
-        const message = generateTransactionReceiptMessage(
-            searchedTransaction.transaction,
-            searchedTransaction.network,
-            nativeCurrencySymbol
-        );
-
-        await BotApi.sendWhatsappMessage(
-            phoneParams.businessPhoneNumberId,
-            MessageGenerators.generateTextMessage(phoneParams.userPhoneNumber, message)
-        );
-
-        const serializedParams = JSON.stringify({
-            transactionHash,
-            hostUrl: env.HOST_URL ?? LIVE_HOST_URL,
-            network: searchedTransaction.network,
+        await QueryMessageHandlers.handleTransactionQueryRelatedMessage(
             phoneParams,
-        } satisfies GenerateTransactionImageProps);
-
-        // Spawn the background process
-        const backgroundProcess = spawn(
-            'bun',
-            [
-                path.join(BACKGROUND_PROCESSES_SCRIPTS_FOLDER, 'generate-transaction-image.ts'),
-                serializedParams,
-            ],
-            {
-                stdio: 'inherit', // Pipe all stdio to the parent process
-            }
+            transactionHash
         );
-
-        backgroundProcess.on('error', (err) => {
-            logSync('error', 'Failed to start background process:', err);
-        });
     }
 
     public static isCommand(command: string) {

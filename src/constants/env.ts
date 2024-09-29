@@ -22,6 +22,7 @@ const envSchema = z.object({
     XATA_API_KEY: notEmptyStringSchema('XATA_API_KEY'),
     HOST_URL: z.string().url().default('https://onchain-buddy.onrender.com'),
     THE_GRAPH_API_KEY: notEmptyStringSchema('THE_GRAPH_API_KEY'),
+    REPLICATE_API_TOKEN: notEmptyStringSchema('REPLICATE_API_TOKEN'),
 });
 
 const env = envSchema.parse(process.env);
