@@ -30,15 +30,14 @@ class AITextContextParser {
             model: this.MODEL,
         });
 
-        const responseJson = JSON.parse(response) as unknown;
+        try {
+            const responseJson = JSON.parse(response) as unknown;
+            const action = AITextContextParser.extractActionFromResponse(responseJson);
 
-        const action = AITextContextParser.extractActionFromResponse(responseJson);
-
-        if (!action) {
+            return action ?? response;
+        } catch (error) {
             return response;
         }
-
-        return action;
     }
 
     private static extractActionFromResponse(responseJson: unknown) {
