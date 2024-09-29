@@ -9,7 +9,7 @@ import { logSync } from '@/resources/logger';
 import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 import { generateTransactionReceiptMessage } from '@/utils/whatsapp-messages';
 import env from '@/constants/env';
-import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesses/generate-transaction-image';
+import { GenerateTransactionImageProps } from '@/app/WhatsApp/backgroundProcesses/generate-transaction-report';
 import { spawn } from 'child_process';
 import path from 'node:path';
 
@@ -120,18 +120,23 @@ class QueryMessageHandlers {
             MessageGenerators.generateTextMessage(whatsAppPhoneParams.userPhoneNumber, message)
         );
 
+        const tokenTransfersCount = OnchainAnalyticsLibrary.filterTokenTransfers(
+            searchedTransaction.transaction.logs
+        ).length;
+
         const serializedParams = JSON.stringify({
             transactionHash,
             hostUrl: env.HOST_URL ?? LIVE_HOST_URL,
             network: searchedTransaction.network,
             phoneParams: whatsAppPhoneParams,
+            exportType: tokenTransfersCount > 4 ? 'pdf' : 'image',
         } satisfies GenerateTransactionImageProps);
 
         // Spawn the background process
         const backgroundProcess = spawn(
             'bun',
             [
-                path.join(BACKGROUND_PROCESSES_SCRIPTS_FOLDER, 'generate-transaction-image.ts'),
+                path.join(BACKGROUND_PROCESSES_SCRIPTS_FOLDER, 'generate-transaction-report.ts'),
                 serializedParams,
             ],
             {

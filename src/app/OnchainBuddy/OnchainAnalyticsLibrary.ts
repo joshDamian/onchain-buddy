@@ -13,7 +13,10 @@ import { generateHtmlFromJsx } from '@/utils/template-rendering';
 import TransactionSummary from '@/resources/templates/TransactionSummary';
 import { ComponentProps } from 'react';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
-import { captureAndStorePageScreenshotAsImage } from '@/utils/page-capture';
+import {
+    captureAndStorePageScreenshotAsImage,
+    captureAndStorePageScreenshotAsPdf,
+} from '@/utils/page-capture';
 import { TRANSFER_EVENT_TOPIC, ZERO_DATA } from '@/constants/strings';
 import { TRANSFER_EVENT_ABI } from '@/resources/abis/erc-20';
 import TokenMetadataQueryLibrary from '@/app/Subgraphs/TokenMetadataQuery';
@@ -32,12 +35,7 @@ class OnchainAnalyticsLibrary {
         transactionReceipt: TransactionReceipt,
         network: SupportedChain
     ) {
-        const erc20TokenTransferLogs = transactionReceipt.logs.filter((log) => {
-            return (
-                (log.topics as Array<Hex>).includes(TRANSFER_EVENT_TOPIC as Hex) &&
-                log.data !== ZERO_DATA
-            );
-        });
+        const erc20TokenTransferLogs = this.filterTokenTransfers(transactionReceipt.logs);
 
         const assetTransfers = await this.decodeTokenTransfers(erc20TokenTransferLogs, network);
 
@@ -60,6 +58,15 @@ class OnchainAnalyticsLibrary {
             )} ${nativeCurrencySymbol}`,
             explorerUrl: getTransactionExplorerUrl(transactionReceipt.transactionHash, network),
             erc20Transfers: assetTransfers,
+        });
+    }
+
+    public static filterTokenTransfers(logs: Log<bigint, number, false>[]) {
+        return logs.filter((log) => {
+            return (
+                (log.topics as Array<Hex>).includes(TRANSFER_EVENT_TOPIC as Hex) &&
+                log.data !== ZERO_DATA
+            );
         });
     }
 
@@ -135,6 +142,30 @@ class OnchainAnalyticsLibrary {
         const analyticsPageUrl = `${domain}/render/analytics/tx/${transactionHash}?level=basic&network=${network}&origin=whatsapp`;
 
         const buffer = await captureAndStorePageScreenshotAsImage(analyticsPageUrl);
+
+        if (buffer) {
+            return {
+                buffer,
+            };
+        }
+    }
+
+    public static async exportBasicTransactionAnalyticsToPdf(
+        transactionHash: string,
+        domain: string,
+        network: SupportedChain
+    ): Promise<
+        | {
+              path: string;
+          }
+        | {
+              buffer: Uint8Array;
+          }
+        | undefined
+    > {
+        const analyticsPageUrl = `${domain}/render/analytics/tx/${transactionHash}?level=basic&network=${network}&origin=whatsapp`;
+
+        const buffer = await captureAndStorePageScreenshotAsPdf(analyticsPageUrl);
 
         if (buffer) {
             return {

@@ -108,6 +108,36 @@ class BotApi {
             await logServiceError(error, 'Error sending image message:');
         }
     }
+
+    public static async sendDocumentMessage(
+        phoneNumberParams: PhoneNumberParams,
+        link: string,
+        caption: string = ''
+    ) {
+        const endpoint = `${phoneNumberParams.businessPhoneNumberId}/messages`;
+
+        try {
+            const requestOptions = this.getRequestConfig();
+            const response = await axios.post(
+                `${this.CLOUD_API_URL}/${endpoint}`,
+                {
+                    messaging_product: 'whatsapp',
+                    recipient_type: 'individual',
+                    to: phoneNumberParams.userPhoneNumber,
+                    type: 'document',
+                    document: {
+                        link: link,
+                        caption: caption,
+                    },
+                },
+                requestOptions
+            );
+
+            logSync('debug', 'Document message sent successfully:', response.data);
+        } catch (error) {
+            await logServiceError(error, 'Error sending document message:');
+        }
+    }
 }
 
 export default BotApi;
