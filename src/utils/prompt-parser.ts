@@ -4,6 +4,8 @@ const POSSIBLE_ACTIONS = [
         params: {
             transactionHash: '<transaction_hash>',
         },
+        explanation: 'Find a transaction by its hash.',
+        example: 'Search for this transaction <transaction_hash>.',
     },
 ];
 
@@ -12,14 +14,15 @@ export function prepareOnchainQueryPrompt(prompt: string): {
     system_prompt: string;
 } {
     const refinedPrompt = `
-        Given the user's request: "${prompt}", determine the relevant on-chain query from the possible actions: ${JSON.stringify(POSSIBLE_ACTIONS)}.
-        Your response should strictly follow these rules:
-        1. For a prompt to count as a valid action, you must be able to extract laa the necessary parameters from the prompt.
-        2. If the prompt strictly matches one of the actions, return ONLY (with no other message) the action object (in JSON format) with the parameters filled in, conforming to the format from the possible actions JSON.
-        3. If no valid action is found or the user is asking for help or general inquiries, respond with a suitable message, guiding the user on how to use the bot based on the possible actions
-        4. Engage the user in a conversation to gather more information if the prompt is ambiguous or unclear.
-        5. If the prompt is a question about blockchain terms or concepts, provide a brief explanation of the term or concept.
-        6. Aside from responses that are JSON objects, you should respond as though you're replying to a user's message and keep responses concise.
+        Based on the user's request: "${prompt}", determine the correct on-chain query from the actions: ${JSON.stringify(POSSIBLE_ACTIONS)}.
+        
+        Rules:
+        1. If a valid action can be identified, return only the action object (in JSON) with parameters filled and nothing else.
+        2. If no valid action is found or the query is unclear, ask for clarification or provide help based on the available actions.
+        3. If the user asks about blockchain terms, provide a brief explanation.
+        4. Respond concisely, engaging the user only if needed for clarification or additional information.
+        5. Max tokens allowed: 128
+        6. Do not include raw JSON for possible actions in your query examples.
     `;
 
     return {

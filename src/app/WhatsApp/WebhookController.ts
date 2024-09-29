@@ -134,9 +134,12 @@ class WebhookController {
             );
 
             if (typeof contextOrMessageResponse === 'string') {
+                // Preserve new lines in response message
+                const responseMessage = contextOrMessageResponse.replace(/\\n/g, '\n');
+
                 await BotApi.sendWhatsappMessage(
                     businessPhoneNumberId,
-                    MessageGenerators.generateTextMessage(from, contextOrMessageResponse)
+                    MessageGenerators.generateTextMessage(from, responseMessage)
                 );
 
                 return;
