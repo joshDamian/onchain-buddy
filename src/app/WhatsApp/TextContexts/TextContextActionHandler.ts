@@ -13,9 +13,9 @@ class TextContextActionHandler {
                     whatsAppPhoneParams,
                     action.params.transactionHash
                 );
-                break;
+                return true;
             default:
-                return 'Unknown action';
+                return false;
         }
     }
 }
