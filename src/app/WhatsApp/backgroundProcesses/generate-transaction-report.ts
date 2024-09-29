@@ -67,11 +67,11 @@ async function generateBasicTransactionImage(params: GenerateTransactionImagePro
     if (exportType === 'image') {
         await BotApi.sendImageMessage(phoneParams, fileUrl, `🔗 View on explorer: ${explorerUrl}`);
     } else {
-        await BotApi.sendDocumentMessage(
-            phoneParams,
-            fileUrl,
-            `🔗 View on explorer: ${explorerUrl}`
-        );
+        await BotApi.sendDocumentMessage(phoneParams, {
+            link: fileUrl,
+            caption: `🔗 View on explorer: ${explorerUrl}`,
+            filename: `Transaction Summary_${transactionHash}`,
+        });
     }
 }
 

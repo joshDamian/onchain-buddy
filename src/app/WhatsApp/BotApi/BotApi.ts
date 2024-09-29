@@ -111,10 +111,15 @@ class BotApi {
 
     public static async sendDocumentMessage(
         phoneNumberParams: PhoneNumberParams,
-        link: string,
-        caption: string = ''
+        documentParams: {
+            link: string;
+            filename: string;
+            caption?: string;
+        }
     ) {
         const endpoint = `${phoneNumberParams.businessPhoneNumberId}/messages`;
+
+        const { caption, filename, link } = documentParams;
 
         try {
             const requestOptions = this.getRequestConfig();
@@ -126,8 +131,9 @@ class BotApi {
                     to: phoneNumberParams.userPhoneNumber,
                     type: 'document',
                     document: {
-                        link: link,
-                        caption: caption,
+                        link,
+                        caption,
+                        filename,
                     },
                 },
                 requestOptions
