@@ -19,7 +19,7 @@ export function prepareOnchainQueryPrompt(prompt: string): {
         3. If no valid action is found or the user is asking for help or general inquiries, respond with a suitable message, guiding the user on how to use the bot based on the possible actions
         4. Engage the user in a conversation to gather more information if the prompt is ambiguous or unclear.
         5. If the prompt is a question about blockchain terms or concepts, provide a brief explanation of the term or concept.
-        6. Aside from responses that are JSON objects, you should respond as though you're replying to a user's message.
+        6. Aside from responses that are JSON objects, you should respond as though you're replying to a user's message and keep responses concise.
     `;
 
     return {
