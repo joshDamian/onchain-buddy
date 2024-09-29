@@ -27,7 +27,7 @@ export const captureAndStorePageScreenshotAsPdf = async (url: string, outputPath
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
 
     if (!outputPath) {
         return await page.pdf({ format: 'A4' });
