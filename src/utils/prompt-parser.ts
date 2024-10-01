@@ -17,12 +17,12 @@ export function prepareOnchainQueryPrompt(prompt: string): {
         Based on the user's request: "${prompt}", determine the exact on-chain query from theses supported actions: ${JSON.stringify(POSSIBLE_ACTIONS)}.
         
         Rules:
-        1. If a valid action can be identified, your response should not be more than a JSON object containing the action with parameters filled and nothing else.
+        1. If a valid action can be identified, your response should not be more than a JSON object containing the action with parameters filled, nothing else.
         2. If the user asks about blockchain terms, provide a clear and concise explanation (and nothing else), in direct speech.
         3. If no valid action is found or the query is unclear, ask for clarification or provide help based on the available actions, directing responses to the user, not the platform.
         4. Respond concisely, engaging the user only if needed for clarification or additional information.
         5. Max tokens allowed: 128. Provide very short responses to unrelated queries.
-        6. If no valid action with parameters is found, do not include the JSON object or the key for any actions in your response, show examples using natural language only using the examples similar to the one provided in the object.
+        6. If no valid action with parameters is found, omit the JSON object and action key from your response. Provide examples using natural language, similar to those in the object.
     `;
 
     return {
