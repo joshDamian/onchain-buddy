@@ -5,7 +5,7 @@ import ReplicateIntegrationLibrary from '@/app/Replicate/ReplicateIntegrationLib
 import { possibleActionsSchema } from './contextSchema';
 
 class AITextContextParser {
-    private static readonly MODEL = 'ibm-granite/granite-20b-code-instruct-8k' as const;
+    private static readonly MODEL = 'meta/meta-llama-3-8b-instruct' as const;
     private static readonly INPUT_CONFIG = {
         top_k: 50,
         top_p: 0.7,
