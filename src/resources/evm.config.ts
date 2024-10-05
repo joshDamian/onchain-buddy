@@ -1,4 +1,4 @@
-import { SupportedChain, Web3Environment } from '@/app/types';
+import { SupportedChain, Web3Environment } from '@/app/schema';
 import { Chain } from 'viem';
 import {
     arbitrum,

@@ -1,4 +1,4 @@
-import { SupportedChain } from '@/app/types';
+import { SupportedChain } from '@/app/schema';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 import { logSync } from '@/resources/logger';
 import fs from 'node:fs';

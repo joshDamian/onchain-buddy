@@ -37,6 +37,13 @@ class BotCommandHandler {
                     botCommand.params.transactionHash
                 );
                 break;
+            case 'REGISTER_WALLET':
+                await BotCommandHandler.handleWalletRegistrationCommand(
+                    phoneParams,
+                    botCommand.params.wallet,
+                    _displayName
+                );
+                break;
             default:
                 return {
                     handled: false,
@@ -65,6 +72,18 @@ class BotCommandHandler {
         );
     }
 
+    public static async handleWalletRegistrationCommand(
+        phoneParams: PhoneNumberParams,
+        wallet: string,
+        displayName: string
+    ) {
+        await QueryMessageHandlers.handleWalletAddressRegistrationRelatedQuery(
+            phoneParams,
+            wallet,
+            displayName
+        );
+    }
+
     public static isCommand(command: string) {
         const commandRegex = Object.values(BOT_COMMANDS_REGEX).find((regex) => regex.test(command));
 
@@ -78,6 +97,7 @@ class BotCommandHandler {
 
         switch (commandName) {
             case 'SUBSCRIBE_WALLET':
+            case 'REGISTER_WALLET':
                 return {
                     command: commandName,
                     params: command.match(commandRegex)?.groups as SubscribeWalletMatchGroups,

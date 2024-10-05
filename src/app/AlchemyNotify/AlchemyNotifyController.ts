@@ -5,10 +5,11 @@ import {
     isValidSignatureForAlchemyRequest,
 } from '@/app/AlchemyNotify/webhookUtils';
 import { type Request, type Response } from 'express';
-import { BAD_REQUEST, FORBIDDEN, OK } from '@/constants/status-codes';
+import { BAD_REQUEST, OK } from '@/constants/status-codes';
 import AlchemyNotifyService from '@/app/AlchemyNotify/AlchemyNotifyService';
 import { handleRequestError } from '@/utils/logging';
-import { SupportedChain } from '@/app/types';
+import { SupportedChain } from '@/app/schema';
+import logger from '@/resources/logger';
 
 class AlchemyNotifyController {
     private static async receiveNotification(req: Request, res: Response, network: SupportedChain) {
@@ -29,8 +30,9 @@ class AlchemyNotifyController {
     public static async notificationHandler(req: Request, res: Response) {
         const { network } = req.params;
 
-        // Todo: Use an array of supported chains
-        const isValidNetwork = (network as SupportedChain) === 'Arbitrum';
+        const isValidNetwork = AlchemyNotifyService.SUPPORTED_CHAINS.includes(
+            network as SupportedChain
+        );
 
         if (!isValidNetwork) {
             return res.sendStatus(BAD_REQUEST);
@@ -42,16 +44,18 @@ class AlchemyNotifyController {
         const signingKey = AlchemyNotifyService.signingKeys[networkAsSupportedChain];
 
         if (!signingKey) {
-            res.status(FORBIDDEN).send('Signature validation failed, unauthorized!');
+            void logger.error('Signature validation failed, signing key missing!');
             return;
         }
 
-        if (!isValidSignatureForAlchemyRequest(req as AlchemyRequest, signingKey)) {
-            res.status(FORBIDDEN).send('Signature validation failed, unauthorized!');
+        const requestAsAlchemyRequest = req as AlchemyRequest;
+
+        if (!isValidSignatureForAlchemyRequest(requestAsAlchemyRequest, signingKey)) {
+            void logger.error('Signature validation failed, unauthorized!');
             return;
         }
 
-        await AlchemyNotifyController.receiveNotification(req, res, network as SupportedChain);
+        await AlchemyNotifyController.receiveNotification(req, res, networkAsSupportedChain);
     }
 }
 

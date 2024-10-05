@@ -2,12 +2,13 @@ import {
     decodeEventLog,
     formatEther,
     formatUnits,
+    getAddress,
     Hex,
     Log,
     Transaction,
     TransactionReceipt,
 } from 'viem';
-import { SUPPORTED_CHAINS, SupportedChain } from '@/app/types';
+import { SUPPORTED_CHAINS, SupportedChain } from '@/app/schema';
 import { generateHtmlFromJsx } from '@/utils/template-rendering';
 import TransactionSummary from '@/resources/templates/TransactionSummary';
 import { ComponentProps } from 'react';
@@ -79,8 +80,8 @@ class OnchainAnalyticsLibrary {
                 topics: log.topics,
             });
             return {
-                from: decodedLog.args.from,
-                to: decodedLog.args.to,
+                from: getAddress(decodedLog.args.from),
+                to: getAddress(decodedLog.args.to),
                 amount: decodedLog.args.value,
                 tokenAddress: log.address,
             };

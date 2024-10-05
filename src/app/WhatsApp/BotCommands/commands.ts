@@ -3,6 +3,7 @@ export const BOT_COMMANDS_REGEX = {
     QUERY_TRANSACTION: /^\/transaction\s+(?<transactionHash>\w+)$/,
     NETWORK_INFO: /^\/network_info$/,
     WALLET_BALANCE: /^\/balance\s+(?<wallet>\w+)$/,
+    REGISTER_WALLET: /^\/register\s+(?<wallet>\w+)$/,
 };
 
 export type SubscribeWalletMatchGroups = {

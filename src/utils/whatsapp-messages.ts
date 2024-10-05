@@ -1,5 +1,7 @@
-import { formatEther, TransactionReceipt } from 'viem';
-import { SupportedChain } from '@/app/types';
+import { formatEther, Transaction, TransactionReceipt } from 'viem';
+import { SupportedChain } from '@/app/schema';
+import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
+import { prettifyNumber } from '@/utils/number-formatting';
 
 export function generateReceivedTokenMessage(params: {
     tokenAmount: string;
@@ -29,10 +31,132 @@ export function generateSentTokenMessage(params: {
     return `🔔 Crypto Withdrawal Notification.\n\n🧾 *Summary:*\nSent *${tokenAmount} ${assetName}* on *${assetNetwork}* to ${receiverAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
 }
 
-export function generateTransactionReceiptMessage(
-    receipt: TransactionReceipt,
-    chain: SupportedChain,
-    nativeCurrencySymbol: string
+function isUserSender(address: string, userWalletAddresses: string[]): boolean {
+    return userWalletAddresses.includes(address);
+}
+
+function isUserReceiver(address: string, userWalletAddresses: string[]): boolean {
+    return userWalletAddresses.includes(address);
+}
+
+function isUserTransferringBetweenWallets(
+    from: string,
+    to: string,
+    userWalletAddresses: string[]
+): boolean {
+    return isUserSender(from, userWalletAddresses) && isUserReceiver(to, userWalletAddresses);
+}
+
+function buildTransactionSummaryTitle(
+    status: string,
+    action: string,
+    amount: string,
+    symbol: string
 ): string {
-    return `🧾 *Transaction Found on ${chain}*\n\n📅 *Block Number:* ${receipt.blockNumber}\n\n🔢 *Gas Used:* ${receipt.gasUsed}\n\n🔢 *Transaction Fee:* ${formatEther(receipt.gasUsed * receipt.effectiveGasPrice)} ${nativeCurrencySymbol}\n\n🔲 *Status:* ${receipt.status}\n\n_Please wait while the bot summarizes the transaction_`;
+    return status === 'success'
+        ? `🔔 You ${action} ${amount} ${symbol}`
+        : `🔔 Failed to ${action} ${amount} ${symbol}`;
+}
+
+function buildTransactionActivitySummary(
+    from: string,
+    to: string,
+    userWalletAddresses: string[]
+): string {
+    const fromText = isUserSender(from, userWalletAddresses) ? `${from} (✅ Your Wallet)` : from;
+    const toText = isUserReceiver(to, userWalletAddresses) ? `${to} (✅ Your Wallet)` : to;
+    return `🔗 *From:* ${fromText}\n🔗 *To:* ${toText}`;
+}
+
+export function generateTransactionReceiptMessage(params: {
+    receipt: TransactionReceipt;
+    chain: SupportedChain;
+    nativeCurrencySymbol: string;
+    decodedTokenTransfers: Awaited<ReturnType<typeof OnchainAnalyticsLibrary.decodeTokenTransfers>>;
+    transaction: Transaction;
+    userWalletAddresses: string[];
+}): string {
+    const {
+        receipt,
+        nativeCurrencySymbol,
+        userWalletAddresses,
+        decodedTokenTransfers,
+        transaction,
+    } = params;
+
+    let transactionSummaryTitle: string;
+    let transactionActivitySummary: string;
+
+    const transactionStatus = receipt.status === 'success' ? '✅ Success' : '❌ Failed';
+
+    // Handle token transfers
+    if (decodedTokenTransfers.length > 0) {
+        const userConcernedTransfers = decodedTokenTransfers.filter(
+            (transfer) =>
+                userWalletAddresses.includes(transfer.to) ||
+                userWalletAddresses.includes(transfer.from)
+        );
+
+        const targetTransfer = userConcernedTransfers[0] ?? decodedTokenTransfers[0];
+
+        const { from, to, formattedAmount, tokenMetadata } = targetTransfer;
+        const action = isUserReceiver(to, userWalletAddresses) ? 'received' : 'sent';
+
+        if (isUserTransferringBetweenWallets(from, to, userWalletAddresses)) {
+            transactionSummaryTitle = buildTransactionSummaryTitle(
+                receipt.status,
+                'moved',
+                prettifyNumber(Number(formattedAmount)),
+                tokenMetadata.symbol
+            );
+        } else {
+            transactionSummaryTitle = buildTransactionSummaryTitle(
+                receipt.status,
+                action,
+                prettifyNumber(Number(formattedAmount)),
+                tokenMetadata.symbol
+            );
+        }
+
+        transactionActivitySummary = buildTransactionActivitySummary(from, to, userWalletAddresses);
+    } else {
+        // Handle native currency transfers (when no token transfers are detected)
+        const amount = prettifyNumber(Number(formatEther(transaction.value)));
+        if (isUserTransferringBetweenWallets(receipt.from, receipt.to ?? '', userWalletAddresses)) {
+            transactionSummaryTitle = buildTransactionSummaryTitle(
+                receipt.status,
+                'moved',
+                amount,
+                nativeCurrencySymbol
+            );
+        } else {
+            const action = isUserReceiver(receipt.to ?? '', userWalletAddresses)
+                ? 'received'
+                : 'sent';
+            transactionSummaryTitle = buildTransactionSummaryTitle(
+                receipt.status,
+                action,
+                amount,
+                nativeCurrencySymbol
+            );
+        }
+
+        transactionActivitySummary = buildTransactionActivitySummary(
+            receipt.from,
+            receipt.to ?? '',
+            userWalletAddresses
+        );
+    }
+
+    const transactionFee = `${formatEther(receipt.gasUsed * receipt.effectiveGasPrice)} ${nativeCurrencySymbol}`;
+
+    return (
+        `🧾 *Transaction Summary: ${transactionStatus}*\n\n` +
+        `📅 *Block Number:* ${receipt.blockNumber}\n\n` +
+        `🔢 *Transaction Fee:* ${transactionFee}\n\n` +
+        `*--- ${transactionSummaryTitle} ---*\n\n` +
+        `${transactionActivitySummary}\n\n` +
+        `💬 *Status*: Transaction ${receipt.status === 'success' ? 'Successful' : 'Failed'}\n\n` +
+        `_Generating transaction receipt..._`
+    );
 }

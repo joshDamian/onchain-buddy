@@ -1,4 +1,4 @@
-import { SupportedChain } from '@/app/types';
+import { SupportedChain } from '@/app/schema';
 
 export const DEFAULT_NETWORK: SupportedChain = 'Arbitrum';
 
@@ -28,3 +28,15 @@ export const TRANSFER_EVENT_TOPIC =
     '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
 export const ZERO_DATA = '0x';
+
+export const FALLBACK_QUERY_DATE_RANGE = {
+    start: '1|M',
+    end: 'now',
+};
+
+export const GET_STARTED_MESSAGES = [
+    `Fetch the last 6 months of Uniswap swaps for wallet 0xd78B7563aFaF32bb56F0d86ab6132690572a7bC3 on Ethereum.`,
+    `Search for this transaction 0xd8f94b6d3016fa937ad97ba87967b4e79fecee5bb9a2f9b8ed32158ca36d27a6.`,
+    `Add this wallet 0x76808d8E91cd0f2E720244B5f88ed37B936d2e2f to my profile.`,
+    `Show swap history for wallet 0x3c5eF6a0aF2F5147A53c689a31b8AeeD12fB6f3D on eth between 1 month ago and now on Uniswap.`,
+];

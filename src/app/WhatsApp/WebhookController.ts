@@ -9,6 +9,9 @@ import BotCommandHandler from '@/app/WhatsApp/BotCommands/BotCommandHandler';
 import AITextContextParser from '@/app/WhatsApp/TextContexts/AITextContextParser';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
 import TextContextActionHandler from '@/app/WhatsApp/TextContexts/TextContextActionHandler';
+import UserManagementLibrary from '@/app/OnchainBuddy/Users/UserManagementLibrary';
+import UserOnboardingLibrary from '@/app/WhatsApp/Onboarding/UserOnboardingLibrary';
+import { isAddress } from 'viem';
 
 class WebhookController {
     public static async receiveMessageWebhook(req: Request, res: Response) {
@@ -111,6 +114,22 @@ class WebhookController {
 
         const phoneParams = { userPhoneNumber: from, businessPhoneNumberId };
 
+        // ============== HANDLE FIRST TIME USER ============== //
+        const user = await UserManagementLibrary.getUserByPhoneNumber(phoneParams.userPhoneNumber);
+
+        if (!user) {
+            if (type === WhatsAppMessageType.TEXT && isAddress(text.body)) {
+                await UserOnboardingLibrary.setupNewUserProfile(phoneParams, {
+                    displayName,
+                    primaryWalletAddress: text.body,
+                });
+                return;
+            }
+
+            await UserOnboardingLibrary.sendWelcomeMessage(phoneParams, displayName);
+            return;
+        }
+
         // ============== HANDLE TEXT MESSAGES ============== //
         if (type === WhatsAppMessageType.TEXT) {
             const botCommand = BotCommandHandler.isCommand(text.body);
@@ -130,7 +149,8 @@ class WebhookController {
 
             // Handle text messages
             const contextOrMessageResponse = await AITextContextParser.deriveContextFromPrompt(
-                text.body
+                text.body,
+                displayName
             );
 
             if (typeof contextOrMessageResponse === 'string') {
@@ -146,7 +166,11 @@ class WebhookController {
             }
 
             // Handle context
-            await TextContextActionHandler.handleAction(contextOrMessageResponse, phoneParams);
+            await TextContextActionHandler.handleAction(
+                contextOrMessageResponse,
+                phoneParams,
+                displayName
+            );
         }
     }
 }

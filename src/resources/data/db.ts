@@ -17,3 +17,5 @@ export const getXataClient = (): XataClient => {
 const xata = getXataClient();
 
 export const walletSubscriptionRepository = xata.db.WalletSubscriptions;
+
+export const userProfileRepository = xata.db.UserProfiles;

@@ -1,4 +1,4 @@
-import { SupportedChain, Web3Environment } from '@/app/types';
+import { SupportedChain, Web3Environment } from '@/app/schema';
 import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 
 const FALL_BACK_EXPLORER_URLS: {

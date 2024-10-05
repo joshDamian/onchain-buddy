@@ -1,6 +1,6 @@
 import express from 'express';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
-import { SUPPORTED_CHAINS, SupportedChain } from '@/app/types';
+import { supportedChainSchema } from '@/app/schema';
 import { getPublicClient } from '@/resources/viem/viemClients';
 import { getAppDefaultEvmConfig } from '@/resources/evm.config';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
@@ -12,14 +12,18 @@ renderingRouter.get('/analytics/tx/:transactionHash', async (req, res) => {
     const { level, network } = req.query as {
         level: 'basic' | 'advanced';
         origin: 'whatsapp' | 'web';
-        network: SupportedChain;
+        network: string;
     };
 
-    if (!SUPPORTED_CHAINS.includes(network)) {
+    const networkValidation = supportedChainSchema.safeParse(network);
+
+    if (!networkValidation.success) {
         return res.status(400).send('Invalid network');
     }
 
-    const networkConfig = getAppDefaultEvmConfig(network);
+    const validNetwork = networkValidation.data;
+
+    const networkConfig = getAppDefaultEvmConfig(validNetwork);
     const publicClient = getPublicClient(networkConfig.viemChain, networkConfig.rpcUrl);
 
     const [transactionReceipt, transaction] = await Promise.all([
@@ -36,7 +40,7 @@ renderingRouter.get('/analytics/tx/:transactionHash', async (req, res) => {
             ? await OnchainAnalyticsLibrary.generateBasicTransactionSummaryPage(
                   transaction,
                   transactionReceipt,
-                  network
+                  validNetwork
               )
             : 'Advanced analytics page';
 

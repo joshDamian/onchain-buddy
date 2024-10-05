@@ -20,6 +20,7 @@
     "@xata.io/client": "0.0.0-next.v403cdd55cb26b69c074dbc07b44daa0c2a0a77b6",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
     "express": "^4.19.2",
     "puppeteer": "^23.4.0",
     "qrcode.react": "^4.0.1",

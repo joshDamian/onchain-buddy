@@ -11,7 +11,7 @@ const app = express();
 // middleware for capturing raw body
 app.use(
     express.json({
-        limit: '5mb',
+        limit: '10mb',
         verify: (req: Request, res, buf, encoding: BufferEncoding) => {
             req.rawBody = buf.toString();
             addAlchemyContextToRequest(req, res, buf, encoding);

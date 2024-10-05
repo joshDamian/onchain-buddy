@@ -1,5 +1,5 @@
 import { type AlchemyAddressActivityWebhookEvent } from '@/app/AlchemyNotify/webhookUtils';
-import { SupportedChain } from '@/app/types';
+import { SupportedChain } from '@/app/schema';
 import { getTransactionExplorerUrl } from '@/resources/explorer';
 import MessageGenerators from '@/app/WhatsApp/MessageGenerators';
 import env from '@/constants/env';
@@ -10,7 +10,7 @@ import { OK } from '@/constants/status-codes';
 import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import { generateReceivedTokenMessage, generateSentTokenMessage } from '@/utils/whatsapp-messages';
 import OnchainBuddyLibrary from '@/app/OnchainBuddy/OnchainBuddyLibrary';
-import { Address } from 'viem';
+import { getAddress } from 'viem';
 import { TRANSFER_EVENT_TOPIC } from '@/constants/strings';
 import OnchainAnalyticsLibrary from '@/app/OnchainBuddy/OnchainAnalyticsLibrary';
 
@@ -20,6 +20,13 @@ enum AlchemyActivityCategory {
 
 class AlchemyNotifyService {
     private static readonly BASE_API_URL = BASE_URL;
+    public static readonly SUPPORTED_CHAINS: Array<SupportedChain> = [
+        'Arbitrum',
+        'Base',
+        'Polygon',
+        'Ethereum',
+        'Optimism',
+    ];
 
     public static async handleAddressActivityNotification(
         payload: AlchemyAddressActivityWebhookEvent,
@@ -48,27 +55,26 @@ class AlchemyNotifyService {
 
         const { fromAddress, toAddress, value, rawContract } = targetActivity;
 
-        const [fromWalletSubscribers, toWalletSubscribers, tokenMetadata] = await Promise.all([
-            OnchainBuddyLibrary.findSubscriptionsByWalletAddress(fromAddress as Address),
-            OnchainBuddyLibrary.findSubscriptionsByWalletAddress(toAddress as Address),
+        const [fromWalletProfiles, toWalletProfiles, tokenMetadata] = await Promise.all([
+            OnchainBuddyLibrary.findUserProfilesByWalletAddress(getAddress(fromAddress)),
+            OnchainBuddyLibrary.findUserProfilesByWalletAddress(getAddress(toAddress)),
             OnchainAnalyticsLibrary.getErc20TokenMetadata(rawContract.address, network),
         ]);
 
-        if (fromWalletSubscribers.length > 0) {
+        if (fromWalletProfiles.length > 0) {
             // Send notification to subscribers
             const message = generateSentTokenMessage({
                 tokenAmount: value.toString(),
-                // Todo: Write functionality to get asset name
-                assetName: tokenMetadata ? tokenMetadata.symbol : '',
+                assetName: tokenMetadata.symbol,
                 assetNetwork: network,
                 receiverAddress: toAddress,
                 transactionHash: targetActivity.hash,
                 explorerUrl: getTransactionExplorerUrl(targetActivity.hash, network),
             });
 
-            const promises = fromWalletSubscribers.map(async (subscriber) => {
+            const promises = fromWalletProfiles.map(async (profile) => {
                 const whatsAppMessage = MessageGenerators.generateTextMessage(
-                    subscriber.subscriberPhoneNumber,
+                    profile.phoneNumber!,
                     message
                 );
 
@@ -77,21 +83,20 @@ class AlchemyNotifyService {
 
             await Promise.allSettled(promises);
         }
-        if (toWalletSubscribers.length > 0) {
+        if (toWalletProfiles.length > 0) {
             // Send notification to subscribers
             const message = generateReceivedTokenMessage({
                 tokenAmount: value.toString(),
-                // Todo: Write functionality to get asset name
-                assetName: tokenMetadata ? tokenMetadata.symbol : '',
+                assetName: tokenMetadata.symbol,
                 assetNetwork: network,
                 senderAddress: fromAddress,
                 transactionHash: targetActivity.hash,
                 explorerUrl: getTransactionExplorerUrl(targetActivity.hash, network),
             });
 
-            const promises = toWalletSubscribers.map(async (subscriber) => {
+            const promises = toWalletProfiles.map(async (profile) => {
                 const whatsAppMessage = MessageGenerators.generateTextMessage(
-                    subscriber.subscriberPhoneNumber,
+                    profile.phoneNumber!,
                     message
                 );
 
@@ -117,7 +122,7 @@ class AlchemyNotifyService {
             },
             {
                 headers: {
-                    'X-Alchemy-Token': env.ALCHEMY_AUTH_TOKEN,
+                    'X-Alchemy-Token': env.ALCHEMY_NOTIFY_FORWARDER_AUTH_TOKEN,
                 },
             }
         );
@@ -127,7 +132,11 @@ class AlchemyNotifyService {
 
     public static get signingKeys(): Partial<Record<SupportedChain, string>> {
         return {
-            Arbitrum: env.ALCHEMY_NOTIFY_ARB_SIGNING_KEY,
+            Arbitrum: env.ALCHEMY_NOTIFY_FORWARDER_ARB_SIGNING_KEY,
+            Base: env.ALCHEMY_NOTIFY_FORWARDER_BASE_SIGNING_KEY,
+            Polygon: env.ALCHEMY_NOTIFY_FORWARDER_POLYGON_SIGNING_KEY,
+            Ethereum: env.ALCHEMY_NOTIFY_FORWARDER_ETH_SIGNING_KEY,
+            Optimism: env.ALCHEMY_NOTIFY_FORWARDER_OPTIMISM_SIGNING_KEY,
         };
     }
 }

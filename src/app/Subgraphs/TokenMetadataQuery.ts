@@ -1,5 +1,5 @@
-import { SupportedChain } from '@/app/types';
-import { SUBGRAPH_BASE_URL, SubgraphIds } from '@/app/Subgraphs/config';
+import { SupportedChain } from '@/app/schema';
+import { getUniswapSubgraphIdByNetwork, SUBGRAPH_BASE_URL } from '@/app/Subgraphs/config';
 import { gql } from '@urql/core';
 import { querySubgraph } from '@/utils/subgraphs';
 import env from '@/constants/env';
@@ -18,7 +18,7 @@ class TokenMetadataQueryLibrary {
     private static readonly SUBGRAPH_API_KEY = env.THE_GRAPH_API_KEY;
 
     public static async getErc20TokenMetadata(tokenAddress: string, chain: SupportedChain) {
-        const subgraphId = this.subgraphIds[chain];
+        const subgraphId = getUniswapSubgraphIdByNetwork(chain);
 
         const query = gql<{
             token: TokenMetadata;
@@ -53,17 +53,6 @@ class TokenMetadataQueryLibrary {
         }
 
         return queryTokenMetadataSchema.parse(response.data?.token);
-    }
-
-    private static get subgraphIds() {
-        return {
-            Arbitrum: SubgraphIds.ARBITRUM_UNISWAP_V3,
-            Base: SubgraphIds.BASE_UNISWAP_V3,
-            Ethereum: SubgraphIds.MAINNET_UNISWAP_V3,
-            Polygon: SubgraphIds.POLYGON_UNISWAP_V3,
-            Optimism: SubgraphIds.OPTIMISM_UNISWAP_V3,
-            NeoX: SubgraphIds.NEOX_UNISWAP_V3,
-        } satisfies Record<(typeof this.SUPPORTED_CHAINS)[number], string>;
     }
 }
 

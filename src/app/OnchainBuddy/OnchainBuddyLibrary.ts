@@ -1,10 +1,17 @@
-import { SupportedChain } from '@/app/types';
+import { SupportedChain } from '@/app/schema';
 import AlchemyNotifyService from '@/app/AlchemyNotify/AlchemyNotifyService';
 import { Address, getAddress, PublicClient } from 'viem';
 import { walletSubscriptionRepository } from '@/resources/data/db';
 import { TOKEN_METADATA_ABI } from '@/resources/abis/erc-20';
+import UserManagementLibrary from '@/app/OnchainBuddy/Users/UserManagementLibrary';
 
 class OnchainBuddyLibrary {
+    /**
+     * @deprecated Attach wallet address to user profile instead using handleWalletAddressRegistrationRelatedQuery
+     * @param walletAddress
+     * @param network
+     * @param subscriberPhoneNumber
+     */
     public static async subscribeWalletNotification(
         walletAddress: Address,
         network: SupportedChain,
@@ -29,12 +36,20 @@ class OnchainBuddyLibrary {
         });
     }
 
+    /**
+     * @deprecated
+     * @param walletAddress
+     */
     public static async findSubscriptionsByWalletAddress(walletAddress: Address) {
         return walletSubscriptionRepository
             .filter({
                 walletAddress: walletAddress,
             })
             .getAll();
+    }
+
+    public static async findUserProfilesByWalletAddress(walletAddress: Address) {
+        return UserManagementLibrary.getUserProfilesByWalletAddress(walletAddress);
     }
 
     public static async getTransactionReceiptByHash(
