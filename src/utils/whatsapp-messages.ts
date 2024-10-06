@@ -10,11 +10,19 @@ export function generateReceivedTokenMessage(params: {
     senderAddress: string;
     transactionHash: string;
     explorerUrl: string;
+    concernedWalletAddress: string;
 }): string {
-    const { tokenAmount, assetName, assetNetwork, transactionHash, explorerUrl, senderAddress } =
-        params;
+    const {
+        tokenAmount,
+        assetName,
+        assetNetwork,
+        transactionHash,
+        explorerUrl,
+        senderAddress,
+        concernedWalletAddress,
+    } = params;
 
-    return `🔔 Crypto Deposit Notification.\n\n🧾 *Summary:*\nReceived *${tokenAmount} ${assetName}* on *${assetNetwork}* from ${senderAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
+    return `🔔 Crypto Deposit Notification.\n\n*Wallet:*${concernedWalletAddress}\n\n🧾 *Summary:*\nReceived *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* from ${senderAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
 }
 
 export function generateSentTokenMessage(params: {
@@ -24,11 +32,19 @@ export function generateSentTokenMessage(params: {
     receiverAddress: string;
     transactionHash: string;
     explorerUrl: string;
+    concernedWalletAddress: string;
 }): string {
-    const { tokenAmount, assetName, assetNetwork, transactionHash, explorerUrl, receiverAddress } =
-        params;
+    const {
+        tokenAmount,
+        assetName,
+        assetNetwork,
+        transactionHash,
+        explorerUrl,
+        receiverAddress,
+        concernedWalletAddress,
+    } = params;
 
-    return `🔔 Crypto Withdrawal Notification.\n\n🧾 *Summary:*\nSent *${tokenAmount} ${assetName}* on *${assetNetwork}* to ${receiverAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
+    return `🔔 Crypto Withdrawal Notification.\n\n*Wallet:*${concernedWalletAddress}\n\n🧾 *Summary:*\nSent *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* to ${receiverAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
 }
 
 function isUserSender(address: string, userWalletAddresses: string[]): boolean {
@@ -51,10 +67,11 @@ function buildTransactionSummaryTitle(
     status: string,
     action: string,
     amount: string,
-    symbol: string
+    symbol: string,
+    isUserWallet: boolean
 ): string {
     return status === 'success'
-        ? `🔔 You ${action} ${amount} ${symbol}`
+        ? `🔔 ${isUserWallet ? 'You' : ''} ${action} ${amount} ${symbol}`
         : `🔔 Failed to ${action} ${amount} ${symbol}`;
 }
 
@@ -107,14 +124,16 @@ export function generateTransactionReceiptMessage(params: {
                 receipt.status,
                 'moved',
                 prettifyNumber(Number(formattedAmount)),
-                tokenMetadata.symbol
+                tokenMetadata.symbol,
+                userConcernedTransfers.length > 0
             );
         } else {
             transactionSummaryTitle = buildTransactionSummaryTitle(
                 receipt.status,
                 action,
                 prettifyNumber(Number(formattedAmount)),
-                tokenMetadata.symbol
+                tokenMetadata.symbol,
+                userConcernedTransfers.length > 0
             );
         }
 
@@ -127,7 +146,8 @@ export function generateTransactionReceiptMessage(params: {
                 receipt.status,
                 'moved',
                 amount,
-                nativeCurrencySymbol
+                nativeCurrencySymbol,
+                true
             );
         } else {
             const action = isUserReceiver(receipt.to ?? '', userWalletAddresses)
@@ -137,7 +157,9 @@ export function generateTransactionReceiptMessage(params: {
                 receipt.status,
                 action,
                 amount,
-                nativeCurrencySymbol
+                nativeCurrencySymbol,
+                isUserSender(receipt.from, userWalletAddresses) ||
+                    isUserReceiver(receipt.to ?? '', userWalletAddresses)
             );
         }
 

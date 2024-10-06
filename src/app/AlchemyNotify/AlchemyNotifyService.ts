@@ -69,6 +69,7 @@ class AlchemyNotifyService {
                 assetNetwork: network,
                 receiverAddress: toAddress,
                 transactionHash: targetActivity.hash,
+                concernedWalletAddress: fromAddress,
                 explorerUrl: getTransactionExplorerUrl(targetActivity.hash, network),
             });
 
@@ -91,6 +92,7 @@ class AlchemyNotifyService {
                 assetNetwork: network,
                 senderAddress: fromAddress,
                 transactionHash: targetActivity.hash,
+                concernedWalletAddress: toAddress,
                 explorerUrl: getTransactionExplorerUrl(targetActivity.hash, network),
             });
 
