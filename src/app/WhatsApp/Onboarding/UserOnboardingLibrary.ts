@@ -4,6 +4,7 @@ import BotApi from '@/app/WhatsApp/BotApi/BotApi';
 import UserManagementLibrary from '@/app/OnchainBuddy/Users/UserManagementLibrary';
 import { GET_STARTED_MESSAGES } from '@/constants/strings';
 import { SUPPORTED_CHAINS } from '@/app/schema';
+import AlchemyNotifyService from '@/app/AlchemyNotify/AlchemyNotifyService';
 
 class UserOnboardingLibrary {
     public static async setupNewUserProfile(
@@ -29,6 +30,15 @@ class UserOnboardingLibrary {
             );
             return;
         }
+
+        const promises = AlchemyNotifyService.SUPPORTED_CHAINS.map((network) =>
+            AlchemyNotifyService.addWebhookAddresses(
+                [userProfileParams.primaryWalletAddress],
+                network
+            )
+        );
+
+        await Promise.allSettled(promises);
 
         await BotApi.sendWhatsappMessage(
             whatsAppPhoneParams.businessPhoneNumberId,
