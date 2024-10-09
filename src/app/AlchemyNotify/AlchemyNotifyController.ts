@@ -51,7 +51,9 @@ class AlchemyNotifyController {
         const requestAsAlchemyRequest = req as AlchemyRequest;
 
         if (!isValidSignatureForAlchemyRequest(requestAsAlchemyRequest, signingKey)) {
-            void logger.error('Signature validation failed, unauthorized!');
+            void logger.error('Signature validation failed, unauthorized!', {
+                alchemy: requestAsAlchemyRequest.alchemy,
+            });
             return;
         }
 
