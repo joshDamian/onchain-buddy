@@ -9,4 +9,4 @@ Onchain Buddy is a WhatsApp-based chatbot that provides real-time blockchain dat
 https://wa.link/8xo5sz
 
 ## Demo Video
-https://drive.google.com/file/d/12tdByZq8GMnfZyHtb3cwfOTjqZBW0oQ9/view?usp=drivesdk
+https://drive.google.com/file/d/15XQ9rk1qdbTb-Lv6ps54oApQQN2gs2Wt/view?usp=sharing
