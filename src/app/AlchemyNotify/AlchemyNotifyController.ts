@@ -53,6 +53,7 @@ class AlchemyNotifyController {
         if (!isValidSignatureForAlchemyRequest(requestAsAlchemyRequest, signingKey)) {
             void logger.error('Signature validation failed, unauthorized!', {
                 alchemy: requestAsAlchemyRequest.alchemy,
+                typeofRawBody: typeof requestAsAlchemyRequest.alchemy.rawBody,
             });
             return;
         }
