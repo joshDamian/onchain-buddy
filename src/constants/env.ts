@@ -23,7 +23,9 @@ const envSchema = z.object({
     REPLICATE_API_TOKEN: notEmptyStringSchema('REPLICATE_API_TOKEN'),
 
     // Notify Signing Keys
-    ALCHEMY_NOTIFY_FORWARDER_AUTH_TOKEN: notEmptyStringSchema('ALCHEMY_AUTH_TOKEN'),
+    ALCHEMY_NOTIFY_FORWARDER_AUTH_TOKEN: notEmptyStringSchema(
+        'ALCHEMY_NOTIFY_FORWARDER_AUTH_TOKEN'
+    ),
     ALCHEMY_NOTIFY_FORWARDER_ARB_SIGNING_KEY: notEmptyStringSchema(
         'ALCHEMY_NOTIFY_ARB_SIGNING_KEY'
     ),
