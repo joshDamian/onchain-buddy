@@ -22,7 +22,7 @@ export function generateReceivedTokenMessage(params: {
         concernedWalletAddress,
     } = params;
 
-    return `🔔 Crypto Deposit Notification.\n\n*Wallet:*${concernedWalletAddress}\n\n🧾 *Summary:*\nReceived *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* from ${senderAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
+    return `🔔 Crypto Deposit Notification.\n\n*Wallet:* ${concernedWalletAddress}\n\n🧾 *Summary:*\nReceived *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* from ${senderAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
 }
 
 export function generateSentTokenMessage(params: {
@@ -44,7 +44,7 @@ export function generateSentTokenMessage(params: {
         concernedWalletAddress,
     } = params;
 
-    return `🔔 Crypto Withdrawal Notification.\n\n*Wallet:*${concernedWalletAddress}\n\n🧾 *Summary:*\nSent *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* to ${receiverAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
+    return `🔔 Crypto Withdrawal Notification.\n\n*Wallet:* ${concernedWalletAddress}\n\n🧾 *Summary:*\nSent *${prettifyNumber(Number(tokenAmount))} ${assetName}* on *${assetNetwork}* to ${receiverAddress}\n\n➡️ *Transaction Hash:* ${transactionHash}\n\n🔍 *View In Explorer:* ${explorerUrl}`;
 }
 
 function isUserSender(address: string, userWalletAddresses: string[]): boolean {
